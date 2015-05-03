@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
 
 import System.Environment (getArgs)
-import Control.Applicative
+import Control.Applicative()
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.Text as T
@@ -13,26 +13,26 @@ import qualified Data.Vector as V
 {- Data types -}
 
 -- List of parties ordered by voter's preference
-type Preferences = [String]
+type Preferences = [Int]
 -- List of probabilities that voter will choose candidate from a party.
 type Probabilities = [Float]
 
 data District = District
-    { district_identifier :: !String
+    { district_identifier :: !Int
     , number_of_seats :: !Int
     }
     deriving (Show)
 
 data Voter = Voter
-    { voter_identifier :: !String
-    , district :: !String
+    { voter_identifier :: !Int
+    , district :: !Int
     , preferences :: Preferences
     , probabilities :: Probabilities
     }
     deriving (Show)
 
 data Party = Party
-    { party_identifier :: !String
+    { party_identifier :: !Int
     }
     deriving (Show)
 
@@ -66,7 +66,7 @@ splitOnColumns s = T.splitOn (T.pack ":") (T.pack s)
 
 instance FromField Preferences where
     parseField s = 
-        pure (map T.unpack (splitOnColumns c) :: Preferences)
+        pure (map (read . T.unpack) (splitOnColumns c) :: Preferences)
         where
             c = BC.unpack s
 
