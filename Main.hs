@@ -8,6 +8,8 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.Text as T
 import Data.Csv
 import qualified Data.Vector as V
+import Data.List (groupBy, sortBy)
+import Data.Ord (comparing)
 
 
 {- Data types -}
@@ -61,7 +63,7 @@ instance FromNamedRecord Party where
 
 
 {- Definitons of parsing methods for custom data types for Data.CSV -}
-
+splitOnColumns :: String -> [T.Text]
 splitOnColumns s = T.splitOn (T.pack ":") (T.pack s)
 
 instance FromField Preferences where
@@ -86,6 +88,20 @@ readCSV path = do
     Right c' -> return $ V.toList $ snd c'
 
 
+convertVoterToTuple :: Voter -> ([Int], [Float])
+convertVoterToTuple v = (preferences v, probabilities v)
+
+sortDistrictsById :: [District] -> [District]
+sortDistrictsById = sortBy (comparing district_identifier)
+
+convertToList :: [District] -> [Voter] -> [([([Int], [Float])], Int)]
+convertToList districts voters = do
+    [(grouped !! i, (number_of_seats (sorted !! i)) ) | i <- [0.. (length grouped) - 1]]
+    where
+        grouped = [map convertVoterToTuple listOfVoters | listOfVoters <- groupBy (\v1 v2 -> (district v1) == (district v2)) voters ]
+        sorted = sortDistrictsById districts
+
+
 main :: IO ()
 main = do
     args <- getArgs
@@ -94,7 +110,5 @@ main = do
             districts <- readCSV dfile :: IO [District]
             voters <- readCSV vfile :: IO [Voter]
             parties <- readCSV pfile :: IO [Party]
-            putStrLn (show districts)
-            putStrLn (show voters)
-            putStrLn (show parties)
+            putStrLn (show $ convertToList districts voters)
         _ -> error "Wrong number of arguments."
