@@ -9,13 +9,19 @@ import qualified Data.Text as T
 import Data.Csv
 import qualified Data.Vector as V
 
+
+{- Data types -}
+
+-- List of parties ordered by voter's preference
+type Preferences = [String]
+-- List of probabilities that voter will choose candidate from a party.
+type Probabilities = [Float]
+
 data District = District
     { district_identifier :: !String
     , number_of_seats :: !Int
     }
-
-type Preferences = [String]
-type Probabilities = [Float]
+    deriving (Show)
 
 data Voter = Voter
     { voter_identifier :: !String
@@ -23,33 +29,22 @@ data Voter = Voter
     , preferences :: Preferences
     , probabilities :: Probabilities
     }
+    deriving (Show)
 
 data Party = Party
     { party_identifier :: !String
     }
+    deriving (Show)
+
+{--}
+
+
+{- Definitions of records in CSV files corresponding to custom data types for Data.CSV -}
 
 instance FromNamedRecord District where
-    parseNamedRecord r = District <$> r .: "district_identifier" <*> r .: "number_of_seats"
-
-readDistricts :: FilePath -> IO()
-readDistricts path = do
-    csvData <- BL.readFile path
-    case decodeByName csvData of
-        Left err -> putStrLn err
-        Right (_, v) -> V.forM_ v $ \ p ->
-            putStrLn $ district_identifier p ++ " contributes " ++ show (number_of_seats p) ++ " seats"
-
-instance FromField Preferences where
-    parseField s = 
-        pure ((map T.unpack (T.splitOn (T.pack ":") (T.pack c))) :: Preferences)
-        where
-            c = BC.unpack s
-
-instance FromField Probabilities where
-    parseField s = 
-        pure ((map (read . T.unpack) (T.splitOn (T.pack ":") (T.pack c))) :: Probabilities)
-        where
-            c = BC.unpack s
+    parseNamedRecord r = District <$> 
+        r .: "district_identifier" <*> 
+        r .: "number_of_seats"
 
 instance FromNamedRecord Voter where
     parseNamedRecord r = Voter <$> 
@@ -62,28 +57,44 @@ instance FromNamedRecord Party where
     parseNamedRecord r = Party <$> 
         r .: "party_identifier"
 
-readVoters :: FilePath -> IO()
-readVoters path = do
-    csvData <- BL.readFile path
-    case decodeByName csvData of
-        Left err -> putStrLn err
-        Right (_, v) -> V.forM_ v $ \ p ->
-            putStrLn $ voter_identifier p ++ " in district " ++ (district p) ++ " has preferences " ++ show (preferences p) ++ " and probabilities " ++ show (probabilities p)
+{--}
 
-readParties :: FilePath -> IO()
-readParties path = do
-    csvData <- BL.readFile path
-    case decodeByName csvData of
-        Left err -> putStrLn err
-        Right (_, v) -> V.forM_ v $ \ p ->
-            putStrLn $ "Party " ++ (party_identifier p)
 
-main :: IO()
+{- Definitons of parsing methods for custom data types for Data.CSV -}
+
+splitOnColumns s = T.splitOn (T.pack ":") (T.pack s)
+
+instance FromField Preferences where
+    parseField s = 
+        pure (map T.unpack (splitOnColumns c) :: Preferences)
+        where
+            c = BC.unpack s
+
+instance FromField Probabilities where
+    parseField s = 
+        pure (map (read . T.unpack) (splitOnColumns c) :: Probabilities)
+        where
+            c = BC.unpack s
+            
+{--}
+
+readCSV :: FromNamedRecord a => FilePath -> IO [a]
+readCSV path = do
+  c <- BL.readFile path
+  case decodeByName c of
+    Left err -> error err
+    Right c' -> return $ V.toList $ snd c'
+
+
+main :: IO ()
 main = do
     args <- getArgs
-    case args of 
+    case args of
         [dfile, vfile, pfile] -> do
-            readDistricts dfile
-            readVoters vfile
-            readParties pfile
-        _ -> putStrLn "Wrong number of arguments"
+            districts <- readCSV dfile :: IO [District]
+            voters <- readCSV vfile :: IO [Voter]
+            parties <- readCSV pfile :: IO [Party]
+            putStrLn (show districts)
+            putStrLn (show voters)
+            putStrLn (show parties)
+        _ -> error "Wrong number of arguments."
