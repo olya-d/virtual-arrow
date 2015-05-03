@@ -24,6 +24,10 @@ data Voter = Voter
     , probabilities :: Probabilities
     }
 
+data Party = Party
+    { party_identifier :: !String
+    }
+
 instance FromNamedRecord District where
     parseNamedRecord r = District <$> r .: "district_identifier" <*> r .: "number_of_seats"
 
@@ -54,6 +58,10 @@ instance FromNamedRecord Voter where
         r .: "preferences" <*>
         r .: "probabilities"
 
+instance FromNamedRecord Party where
+    parseNamedRecord r = Party <$> 
+        r .: "party_identifier"
+
 readVoters :: FilePath -> IO()
 readVoters path = do
     csvData <- BL.readFile path
@@ -62,11 +70,20 @@ readVoters path = do
         Right (_, v) -> V.forM_ v $ \ p ->
             putStrLn $ voter_identifier p ++ " in district " ++ (district p) ++ " has preferences " ++ show (preferences p) ++ " and probabilities " ++ show (probabilities p)
 
+readParties :: FilePath -> IO()
+readParties path = do
+    csvData <- BL.readFile path
+    case decodeByName csvData of
+        Left err -> putStrLn err
+        Right (_, v) -> V.forM_ v $ \ p ->
+            putStrLn $ "Party " ++ (party_identifier p)
+
 main :: IO()
 main = do
     args <- getArgs
     case args of 
-        [dfile, vfile] -> do
+        [dfile, vfile, pfile] -> do
             readDistricts dfile
             readVoters vfile
+            readParties pfile
         _ -> putStrLn "Wrong number of arguments"
