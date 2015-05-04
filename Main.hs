@@ -10,6 +10,7 @@ import Data.Csv
 import qualified Data.Vector as V
 import Data.List (groupBy, sortBy)
 import Data.Ord (comparing)
+import Data.Function (on)
 
 import qualified Input as I
 import Election (bordaCount, oneDistrictProportionality)
@@ -21,8 +22,8 @@ import Election (bordaCount, oneDistrictProportionality)
 
 instance FromNamedRecord I.District where
     parseNamedRecord r = I.District <$> 
-        r .: "district_identifier" <*> 
-        r .: "number_of_seats"
+        r .: "districtID" <*> 
+        r .: "numberOfSeats"
 
 instance FromNamedRecord I.Voter where
     parseNamedRecord r = I.Voter <$> 
@@ -68,13 +69,13 @@ convertVoterToTuple :: I.Voter -> ([Int], [Float])
 convertVoterToTuple v = (I.preferences v, I.probabilities v)
 
 sortDistrictsById :: [I.District] -> [I.District]
-sortDistrictsById = sortBy (comparing I.district_id)
+sortDistrictsById = sortBy (comparing I.districtID)
 
 convertToList :: [I.District] -> [I.Voter] -> [([([Int], [Float])], Int)]
-convertToList districts voters = do
-    [(grouped !! i, (I.number_of_seats (sorted !! i)) ) | i <- [0.. (length grouped) - 1]]
+convertToList districts voters =
+    [(grouped !! i, I.numberOfSeats (sorted !! i)) | i <- [0..length grouped - 1]]
     where
-        grouped = [map convertVoterToTuple listOfVoters | listOfVoters <- groupBy (\v1 v2 -> (I.district v1) == (I.district v2)) voters ]
+        grouped = [map convertVoterToTuple listOfVoters | listOfVoters <- groupBy ((==) `on` I.district) voters ]
         sorted = sortDistrictsById districts
 
 main :: IO ()
@@ -84,5 +85,5 @@ main = do
         [dfile, vfile, pfile] -> do
             districts <- readCSV dfile :: IO [I.District]
             voters <- readCSV vfile :: IO [I.Voter]
-            putStrLn (show $ oneDistrictProportionality (I.Input{I.districts=districts, I.voters=voters}))
+            print (oneDistrictProportionality I.Input{I.districts=districts, I.voters=voters})
         _ -> error "Wrong number of arguments."

@@ -24,13 +24,13 @@ type Probabilities = [Float]
 type Parliament = [(Int, Int)]
 
 data District = District
-    { district_id :: !Int
-    , number_of_seats :: !Int
+    { districtID :: !Int
+    , numberOfSeats :: !Int
     }
     deriving (Show)
 
 data Voter = Voter
-    { voter_id :: !Int
+    { voterID :: !Int
     , district :: !Int
     , preferences :: Preferences
     , probabilities :: Probabilities
@@ -38,7 +38,7 @@ data Voter = Voter
     deriving (Show)
 
 data Party = Party
-    { party_id :: !Int
+    { partyID :: !Int
     }
     deriving (Show)
 
@@ -49,20 +49,20 @@ data Input = Input
 
 
 getListOfNumberOfSeats :: Input -> [Int]
-getListOfNumberOfSeats input = map (number_of_seats) (districts input)
+getListOfNumberOfSeats input = map numberOfSeats (districts input)
 
 getVotersByDistrictID :: Input -> Int -> [Voter]
-getVotersByDistrictID input district_id = filter (\x -> district x == district_id) (voters input)
+getVotersByDistrictID input districtID = filter (\x -> district x == districtID) (voters input)
 
 getFirstChoices :: Input -> [Int]
-getFirstChoices input = map (\voter -> (preferences voter) !! 0) (voters input)
+getFirstChoices input = map (head. preferences) (voters input)
 
-numberOfSeats :: Input -> Int
-numberOfSeats input = sum (getListOfNumberOfSeats input)
+seats :: Input -> Int
+seats input = sum (getListOfNumberOfSeats input)
 
 numberOfVoters :: Input -> Int
 numberOfVoters input = length (voters input)
 
 calculateProportion :: Input -> Int -> Int
 calculateProportion input x =  
-    round $ ((fromIntegral x) * (fromIntegral (numberOfSeats input)) / (fromIntegral $ numberOfVoters input))
+    round (fromIntegral x * fromIntegral (seats input) / fromIntegral (numberOfVoters input))

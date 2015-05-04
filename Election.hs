@@ -7,29 +7,30 @@ module Election
 import Data.List (elemIndex, groupBy)
 import qualified Input as I
 import qualified Utils as U
+import Data.Maybe (fromMaybe)
+import Data.Function (on)
 
 accVotes :: [Int] -> ([Int], [Float]) -> [Int]
 accVotes acc voter =
-    [(acc !! i) + getVote (fst voter) i | i <- [0 .. (length acc) - 1]]
+    [(acc !! i) + getVote (fst voter) i | i <- [0..length acc - 1]]
     where
-        getVote preferences party_id = case (elemIndex party_id preferences) of
-            Just n -> n
-            Nothing -> error ((show party_id) ++ (show preferences))
+        getVote preferences party_id = 
+            fromMaybe (error (show party_id ++ show preferences)) (elemIndex party_id preferences)
 
 bordaCountInDistrict :: [([Int], [Float])] -> Int -> [Int]
 bordaCountInDistrict voters numOfParties =
-    foldl (\acc v -> accVotes acc v) (replicate numOfParties 0) voters
+    foldl accVotes (replicate numOfParties 0) voters
 
 minIndex :: (Ord a) => [a] -> Int
 minIndex list = snd . minimum $ zip list [0 .. ]
 
 listOfResultsByDistrict :: [([([Int], [Float])], Int)] -> Int -> [Int]
 listOfResultsByDistrict input numOfParties = 
-    map minIndex (map (\d -> bordaCountInDistrict (fst d) numOfParties) input)
+   map (minIndex . (\ d -> bordaCountInDistrict (fst d) numOfParties)) input
 
 bordaCount :: [([([Int], [Float])], Int)] -> Int -> [(Int, Int)]
 bordaCount input numOfParties = 
-    map (\g -> (sum (map (fst) g), snd (g !! 0))) (groupBy (\x y -> snd x == snd y) (zip (map (snd) input) (listOfResultsByDistrict input numOfParties)))
+    map (\g -> (sum (map fst g), snd (head g))) (groupBy ((==) `on` snd) (zip (map snd input) (listOfResultsByDistrict input numOfParties)))
 
 oneDistrictProportionality :: I.Input -> [(Int, Int)] 
 oneDistrictProportionality input = 
