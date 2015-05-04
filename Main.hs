@@ -10,6 +10,7 @@ import Data.Csv
 import qualified Data.Vector as V
 import Data.List (groupBy, sortBy)
 import Data.Ord (comparing)
+import Election (bordaCount)
 
 
 {- Data types -}
@@ -109,6 +110,5 @@ main = do
         [dfile, vfile, pfile] -> do
             districts <- readCSV dfile :: IO [District]
             voters <- readCSV vfile :: IO [Voter]
-            parties <- readCSV pfile :: IO [Party]
-            putStrLn (show $ convertToList districts voters)
+            putStrLn (show $ bordaCount (convertToList districts voters) 3)
         _ -> error "Wrong number of arguments."
