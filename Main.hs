@@ -10,54 +10,29 @@ import Data.Csv
 import qualified Data.Vector as V
 import Data.List (groupBy, sortBy)
 import Data.Ord (comparing)
-import Election (bordaCount)
 
-
-{- Data types -}
-
--- List of parties ordered by voter's preference
-type Preferences = [Int]
--- List of probabilities that voter will choose candidate from a party.
-type Probabilities = [Float]
-
-data District = District
-    { district_identifier :: !Int
-    , number_of_seats :: !Int
-    }
-    deriving (Show)
-
-data Voter = Voter
-    { voter_identifier :: !Int
-    , district :: !Int
-    , preferences :: Preferences
-    , probabilities :: Probabilities
-    }
-    deriving (Show)
-
-data Party = Party
-    { party_identifier :: !Int
-    }
-    deriving (Show)
+import qualified Input as I
+import Election (bordaCount, oneDistrictProportionality)
 
 {--}
 
 
 {- Definitions of records in CSV files corresponding to custom data types for Data.CSV -}
 
-instance FromNamedRecord District where
-    parseNamedRecord r = District <$> 
+instance FromNamedRecord I.District where
+    parseNamedRecord r = I.District <$> 
         r .: "district_identifier" <*> 
         r .: "number_of_seats"
 
-instance FromNamedRecord Voter where
-    parseNamedRecord r = Voter <$> 
+instance FromNamedRecord I.Voter where
+    parseNamedRecord r = I.Voter <$> 
         r .: "voter_identifier" <*>
         r .: "district" <*>
         r .: "preferences" <*>
         r .: "probabilities"
 
-instance FromNamedRecord Party where
-    parseNamedRecord r = Party <$> 
+instance FromNamedRecord I.Party where
+    parseNamedRecord r = I.Party <$> 
         r .: "party_identifier"
 
 {--}
@@ -67,15 +42,15 @@ instance FromNamedRecord Party where
 splitOnColumns :: String -> [T.Text]
 splitOnColumns s = T.splitOn (T.pack ":") (T.pack s)
 
-instance FromField Preferences where
+instance FromField I.Preferences where
     parseField s = 
-        pure (map (read . T.unpack) (splitOnColumns c) :: Preferences)
+        pure (map (read . T.unpack) (splitOnColumns c) :: I.Preferences)
         where
             c = BC.unpack s
 
-instance FromField Probabilities where
+instance FromField I.Probabilities where
     parseField s = 
-        pure (map (read . T.unpack) (splitOnColumns c) :: Probabilities)
+        pure (map (read . T.unpack) (splitOnColumns c) :: I.Probabilities)
         where
             c = BC.unpack s
             
@@ -89,26 +64,25 @@ readCSV path = do
     Right c' -> return $ V.toList $ snd c'
 
 
-convertVoterToTuple :: Voter -> ([Int], [Float])
-convertVoterToTuple v = (preferences v, probabilities v)
+convertVoterToTuple :: I.Voter -> ([Int], [Float])
+convertVoterToTuple v = (I.preferences v, I.probabilities v)
 
-sortDistrictsById :: [District] -> [District]
-sortDistrictsById = sortBy (comparing district_identifier)
+sortDistrictsById :: [I.District] -> [I.District]
+sortDistrictsById = sortBy (comparing I.district_id)
 
-convertToList :: [District] -> [Voter] -> [([([Int], [Float])], Int)]
+convertToList :: [I.District] -> [I.Voter] -> [([([Int], [Float])], Int)]
 convertToList districts voters = do
-    [(grouped !! i, (number_of_seats (sorted !! i)) ) | i <- [0.. (length grouped) - 1]]
+    [(grouped !! i, (I.number_of_seats (sorted !! i)) ) | i <- [0.. (length grouped) - 1]]
     where
-        grouped = [map convertVoterToTuple listOfVoters | listOfVoters <- groupBy (\v1 v2 -> (district v1) == (district v2)) voters ]
+        grouped = [map convertVoterToTuple listOfVoters | listOfVoters <- groupBy (\v1 v2 -> (I.district v1) == (I.district v2)) voters ]
         sorted = sortDistrictsById districts
-
 
 main :: IO ()
 main = do
     args <- getArgs
     case args of
         [dfile, vfile, pfile] -> do
-            districts <- readCSV dfile :: IO [District]
-            voters <- readCSV vfile :: IO [Voter]
-            putStrLn (show $ bordaCount (convertToList districts voters) 3)
+            districts <- readCSV dfile :: IO [I.District]
+            voters <- readCSV vfile :: IO [I.Voter]
+            putStrLn (show $ oneDistrictProportionality (I.Input{I.districts=districts, I.voters=voters}))
         _ -> error "Wrong number of arguments."
