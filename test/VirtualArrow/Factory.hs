@@ -1,4 +1,4 @@
-module VirtualArrow.Factory (input) where
+module VirtualArrow.Factory (input, oneDistrictProportionalityResult) where
 
 import VirtualArrow.Input
 
@@ -23,9 +23,13 @@ votersFactory =
 
 partiesFactory :: [Party]
 partiesFactory =
-    [ Party{partyID=1}
+    [ Party{partyID=0}
+    , Party{partyID=1}
     , Party{partyID=2}
-    , Party{partyID=3}
     ]
 
+input :: Input
 input = Input{districts=districtsFactory, voters=votersFactory}
+
+oneDistrictProportionalityResult :: Parliament
+oneDistrictProportionalityResult = [(0, 2), (1, 4)]
