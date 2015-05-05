@@ -27,14 +27,14 @@ instance FromNamedRecord I.District where
 
 instance FromNamedRecord I.Voter where
     parseNamedRecord r = I.Voter <$> 
-        r .: "voter_identifier" <*>
+        r .: "voterID" <*>
         r .: "district" <*>
         r .: "preferences" <*>
         r .: "probabilities"
 
 instance FromNamedRecord I.Party where
     parseNamedRecord r = I.Party <$> 
-        r .: "party_identifier"
+        r .: "partyID"
 
 {--}
 
