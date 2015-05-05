@@ -23,7 +23,7 @@ import VirtualArrow.Election (bordaCount, oneDistrictProportionality)
 instance FromNamedRecord I.District where
     parseNamedRecord r = I.District <$> 
         r .: "districtID" <*> 
-        r .: "numberOfSeats"
+        r .: "seats"
 
 instance FromNamedRecord I.Voter where
     parseNamedRecord r = I.Voter <$> 
@@ -73,7 +73,7 @@ sortDistrictsById = sortBy (comparing I.districtID)
 
 convertToList :: [I.District] -> [I.Voter] -> [([([Int], [Float])], Int)]
 convertToList districts voters =
-    [(grouped !! i, I.numberOfSeats (sorted !! i)) | i <- [0..length grouped - 1]]
+    [(grouped !! i, I.seats (sorted !! i)) | i <- [0..length grouped - 1]]
     where
         grouped = [map convertVoterToTuple listOfVoters | listOfVoters <- groupBy ((==) `on` I.district) voters ]
         sorted = sortDistrictsById districts

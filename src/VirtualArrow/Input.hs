@@ -1,8 +1,8 @@
 module VirtualArrow.Input
 (
-    Preferences(..),
-    Probabilities(..),
-    Parliament(..),
+    Preferences,
+    Probabilities,
+    Parliament,
     District(..),
     Voter(..),
     Party(..),
@@ -25,7 +25,7 @@ type Parliament = [(Int, Int)]
 
 data District = District
     { districtID :: !Int
-    , numberOfSeats :: !Int
+    , seats :: !Int
     }
     deriving (Show)
 
@@ -49,20 +49,20 @@ data Input = Input
 
 
 getListOfNumberOfSeats :: Input -> [Int]
-getListOfNumberOfSeats input = map numberOfSeats (districts input)
+getListOfNumberOfSeats input = map seats (districts input)
 
 getVotersByDistrictID :: Input -> Int -> [Voter]
-getVotersByDistrictID input districtID = filter (\x -> district x == districtID) (voters input)
+getVotersByDistrictID input dID = filter (\x -> district x == dID) (voters input)
 
 getFirstChoices :: Input -> [Int]
 getFirstChoices input = map (head. preferences) (voters input)
 
-seats :: Input -> Int
-seats input = sum (getListOfNumberOfSeats input)
+numberOfSeats :: Input -> Int
+numberOfSeats input = sum (getListOfNumberOfSeats input)
 
 numberOfVoters :: Input -> Int
 numberOfVoters input = length (voters input)
 
 calculateProportion :: Input -> Int -> Int
 calculateProportion input x =  
-    round (fromIntegral x * fromIntegral (seats input) / fromIntegral (numberOfVoters input))
+    round (fromIntegral x * fromIntegral (numberOfSeats input) / fromIntegral (numberOfVoters input))
