@@ -1,12 +1,12 @@
-module Election
+module VirtualArrow.Election
 (
     bordaCount,
     oneDistrictProportionality
 ) where
 
 import Data.List (elemIndex, groupBy)
-import qualified Input as I
-import qualified Utils as U
+import qualified VirtualArrow.Input as I
+import qualified VirtualArrow.Utils as U
 import Data.Maybe (fromMaybe)
 import Data.Function (on)
 

@@ -1,4 +1,4 @@
-module Input
+module VirtualArrow.Input
 (
     Preferences(..),
     Probabilities(..),

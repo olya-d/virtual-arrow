@@ -1,4 +1,4 @@
-module Utils
+module VirtualArrow.Utils
 (
     frequences
 ) where

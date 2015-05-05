@@ -12,8 +12,8 @@ import Data.List (groupBy, sortBy)
 import Data.Ord (comparing)
 import Data.Function (on)
 
-import qualified Input as I
-import Election (bordaCount, oneDistrictProportionality)
+import qualified VirtualArrow.Input as I
+import VirtualArrow.Election (bordaCount, oneDistrictProportionality)
 
 {--}
 
