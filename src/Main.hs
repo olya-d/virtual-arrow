@@ -85,5 +85,5 @@ main = do
         [dfile, vfile, pfile] -> do
             districts <- readCSV dfile :: IO [I.District]
             voters <- readCSV vfile :: IO [I.Voter]
-            print (oneDistrictProportionality I.Input{I.districts=districts, I.voters=voters})
+            print (oneDistrictProportionality I.Input{I.districts=districts, I.voters=voters, I.numOfParties=3})
         _ -> error "Wrong number of arguments."

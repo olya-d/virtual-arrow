@@ -10,28 +10,31 @@ import qualified VirtualArrow.Utils as U
 import Data.Maybe (fromMaybe)
 import Data.Function (on)
 
-accVotes :: [Int] -> ([Int], [Float]) -> [Int]
-accVotes acc voter =
-    [(acc !! i) + getVote (fst voter) i | i <- [0..length acc - 1]]
+
+bordaCount :: I.Input -> I.Parliament
+bordaCount input = 
+    map
+        (\g -> (snd (head g), sum (map fst g))) 
+        (groupBy 
+            ((==) `on` snd) 
+            (zip 
+                (I.numberOfSeatsByDistrict input) 
+                (map (U.minIndex . \vs -> bordaCountAmongVoters vs pn) (I.votersByDistrict input))
+            )
+        )
     where
-        getVote preferences party_id = 
-            fromMaybe (error (show party_id ++ show preferences)) (elemIndex party_id preferences)
+        pn = I.numOfParties input
+        bordaCountAmongVoters :: [I.Voter] -> Int -> [Int]
+        bordaCountAmongVoters voters numOfParties =
+            foldl accVotes (replicate numOfParties 0) voters
+        accVotes :: [Int] -> I.Voter -> [Int]
+        accVotes acc voter =
+            [(acc !! i) + getVote (I.preferences voter) i | i <- [0..length acc - 1]]
+            where
+                getVote preferences partyID = 
+                    fromMaybe (error (show partyID ++ show preferences)) (elemIndex partyID preferences) 
 
-bordaCountInDistrict :: [([Int], [Float])] -> Int -> [Int]
-bordaCountInDistrict voters numOfParties =
-    foldl accVotes (replicate numOfParties 0) voters
 
-minIndex :: (Ord a) => [a] -> Int
-minIndex list = snd . minimum $ zip list [0 .. ]
-
-listOfResultsByDistrict :: [([([Int], [Float])], Int)] -> Int -> [Int]
-listOfResultsByDistrict input numOfParties = 
-   map (minIndex . (\ d -> bordaCountInDistrict (fst d) numOfParties)) input
-
-bordaCount :: [([([Int], [Float])], Int)] -> Int -> [(Int, Int)]
-bordaCount input numOfParties = 
-    map (\g -> (sum (map fst g), snd (head g))) (groupBy ((==) `on` snd) (zip (map snd input) (listOfResultsByDistrict input numOfParties)))
-
-oneDistrictProportionality :: I.Input -> [(Int, Int)] 
+oneDistrictProportionality :: I.Input -> I.Parliament
 oneDistrictProportionality input = 
     map (\x -> (fst x, I.calculateProportion input (snd x))) (U.frequences $ I.getFirstChoices input)

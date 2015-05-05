@@ -9,7 +9,10 @@ module VirtualArrow.Input
     Input(..),
     getListOfNumberOfSeats,
     getVotersByDistrictID,
+    votersByDistrict,
     numberOfSeats,
+    numberOfSeatsByDistrictID,
+    numberOfSeatsByDistrict,
     numberOfVoters,
     getFirstChoices,
     calculateProportion
@@ -45,6 +48,7 @@ data Party = Party
 data Input = Input 
     { districts :: [District]
     , voters :: [Voter]
+    , numOfParties :: !Int
     }
 
 
@@ -53,6 +57,15 @@ getListOfNumberOfSeats input = map seats (districts input)
 
 getVotersByDistrictID :: Input -> Int -> [Voter]
 getVotersByDistrictID input dID = filter (\x -> district x == dID) (voters input)
+
+votersByDistrict :: Input -> [[Voter]]
+votersByDistrict input = [getVotersByDistrictID input i | i <- map districtID (districts input)]
+
+numberOfSeatsByDistrictID :: Input -> Int -> Int
+numberOfSeatsByDistrictID input dID = seats (head $ filter (\x -> districtID x == dID) (districts input))
+
+numberOfSeatsByDistrict :: Input -> [Int]
+numberOfSeatsByDistrict input = [numberOfSeatsByDistrictID input i | i <- map districtID (districts input)]
 
 getFirstChoices :: Input -> [Int]
 getFirstChoices input = map (head. preferences) (voters input)
