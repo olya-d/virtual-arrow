@@ -31,9 +31,14 @@ spec = do
         it "returns the total number of seats" $
             numberOfSeatsByDistrict input `shouldBe` [4, 2]
 
-    describe "VirtualArrow.Input.getFirstChoices" $
+    describe "VirtualArrow.Input.firstChoices" $
         it "returns list of the first choice for each voter" $
-            getFirstChoices input `shouldBe` [0, 1, 0, 0, 1, 1, 1, 1]
+            firstChoices input `shouldBe` [0, 1, 0, 0, 1, 1, 1, 1]
+
+    describe "VirtualArrow.Input.firstChoicesAmongVoters" $
+        it "returns list of the first choice for each voter" $ do
+            firstChoicesAmongVoters (votersByDistrictID input 1) `shouldBe` [0, 1, 0, 0, 1]
+            firstChoicesAmongVoters (votersByDistrictID input 2) `shouldBe` [1, 1, 1]
 
     describe "VirtualArrow.Input.numberOfSeats" $
         it "returns the total number of seats" $

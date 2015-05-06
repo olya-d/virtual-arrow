@@ -1,4 +1,9 @@
-module VirtualArrow.Factory (input, oneDistrictProportionalityResult, bordaCountResult) where
+module VirtualArrow.Factory (
+    input, 
+    oneDistrictProportionalityResult, 
+    bordaCountResult,
+    pluralityResult
+) where
 
 import VirtualArrow.Input
 
@@ -36,3 +41,6 @@ oneDistrictProportionalityResult = [(0, 2), (1, 4)]
 
 bordaCountResult :: Parliament
 bordaCountResult = [(0, 4), (1, 2)]
+
+pluralityResult :: Parliament
+pluralityResult = [(0, 4), (1, 2)]
