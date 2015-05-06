@@ -3,7 +3,8 @@ module VirtualArrow.Election
     bordaCount,
     oneDistrictProportionality,
     plurality,
-    runOffPlurality
+    runOffPlurality,
+    multiDistrictProportionality
 ) where
 
 import Data.List (elemIndex, groupBy, maximumBy, sortBy)
@@ -41,10 +42,11 @@ bordaCount input =
                 getVote preferences partyID = 
                     fromMaybe (error (show partyID ++ show preferences)) (elemIndex partyID preferences) 
 
-
 oneDistrictProportionality :: I.Input -> I.Parliament
 oneDistrictProportionality input = 
-    map (\x -> (fst x, I.calculateProportion input (snd x))) (U.frequences $ I.firstChoices input)
+    map
+        (\x -> (fst x, I.calculateProportion input (snd x))) 
+        (U.frequences $ I.firstChoices input)
 
 plurality :: I.Input -> I.Parliament
 plurality input =
@@ -93,3 +95,30 @@ runOffPlurality input =
                 sP = last couple
                 voters = I.votersByDistrictID input districtID
 
+distributeSeats :: [(Int, Int, Int)] -> Int-> [(Int, Int, Int)]
+distributeSeats result 0 = result
+distributeSeats result seatsLeft =
+    let (x,(party, votes, currSeats):y) = splitAt (maxQuotaIndex - 1) result
+    in
+    distributeSeats (x ++ [(party, votes, currSeats + 1)] ++ y) (seatsLeft - 1)
+    where
+        maxQuotaIndex = 
+            U.maxIndex (map quota result)
+        quota (_, votes, seats) = 
+            fromIntegral votes / (fromIntegral seats * 2.0 + 1.0)
+
+multiDistrictProportionality :: I.Input -> I.Parliament
+multiDistrictProportionality input =
+    sumSeatsAcrossDistricts $ concatMap sainteLague (I.votersByDistrict input)
+    where
+        sainteLague :: (Int, [I.Voter]) -> [(Int, Int)]
+        sainteLague (districtID, voters) =
+            map
+                (\(party, votes, seats) -> (seats, party))
+                (distributeSeats
+                    (map 
+                        (\(party, votes) -> (party, votes, 0))
+                        (U.frequences (I.firstChoicesAmongVoters voters))
+                    )
+                    (I.numberOfSeatsByDistrictID input districtID)
+                )
