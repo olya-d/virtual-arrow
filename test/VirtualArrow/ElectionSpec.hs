@@ -32,3 +32,7 @@ spec = do
     describe "VirtualArrow.Election.mixedMember1Result" $
         it "returns the resulting parliament" $
             mixedMember1 input 0.5 `shouldBe` mixedMember1Result
+
+    describe "VirtualArrow.Election.mixedMember1Result" $
+        it "returns the resulting parliament" $
+            mixedMember2 input 0.5 `shouldBe` mixedMember2Result

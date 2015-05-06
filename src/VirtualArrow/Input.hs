@@ -67,8 +67,9 @@ votersByDistrict input = [(i, votersByDistrictID input i) | i <- map districtID 
 numberOfSeatsByDistrictID :: Input -> Int -> Int
 numberOfSeatsByDistrictID input dID = seats (head $ filter (\x -> districtID x == dID) (districts input))
 
-numberOfSeatsByDistrict :: Input -> [Int]
-numberOfSeatsByDistrict input = [numberOfSeatsByDistrictID input i | i <- map districtID (districts input)]
+numberOfSeatsByDistrict :: Input -> [(Int, Int)]
+numberOfSeatsByDistrict input = 
+    [(i, numberOfSeatsByDistrictID input i) | i <- map districtID (districts input)]
 
 firstChoices :: Input -> [Int]
 firstChoices input = map (head. preferences) (voters input)
@@ -84,4 +85,4 @@ numberOfVoters input = length (voters input)
 
 calculateProportion :: Input -> Int -> Int
 calculateProportion input x =  
-    round ((x * (numberOfSeats input)) /. (numberOfVoters input))
+    round ((x * numberOfSeats input) /. numberOfVoters input)

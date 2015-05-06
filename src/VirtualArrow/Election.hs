@@ -5,7 +5,8 @@ module VirtualArrow.Election
     plurality,
     runOffPlurality,
     multiDistrictProportionality,
-    mixedMember1
+    mixedMember1,
+    mixedMember2
 ) where
 
 import Data.List (elemIndex, groupBy, maximumBy, sortBy, sort)
@@ -28,7 +29,7 @@ bordaCount :: I.Input -> I.Parliament
 bordaCount input =
     sumSeatsAcrossDistricts
         (zip 
-            (I.numberOfSeatsByDistrict input) 
+            (map snd (I.numberOfSeatsByDistrict input))
             (map (U.minIndex . \x -> bordaCountAmongVoters (snd x) pn) (I.votersByDistrict input))
         )
     where
@@ -53,7 +54,7 @@ plurality :: I.Input -> I.Parliament
 plurality input =
     sumSeatsAcrossDistricts
         (zip 
-            (I.numberOfSeatsByDistrict input) 
+            (map snd (I.numberOfSeatsByDistrict input))
             (map (winner . I.firstChoicesAmongVoters . snd) (I.votersByDistrict input))
         )
     where
@@ -127,8 +128,8 @@ multiDistrictProportionality input =
 mixedMember1 :: I.Input -> Double -> I.Parliament
 mixedMember1 input weight =
     weightedParliament 
-        (sort $ multiDistrictProportionality input)
         (sort $ plurality input)
+        (sort $ multiDistrictProportionality input)
     where
         weightedParliament :: I.Parliament -> I.Parliament -> I.Parliament
         weightedParliament parliament1 parliament2 =
@@ -138,4 +139,25 @@ mixedMember1 input weight =
             where
                 wm :: Double -> Double -> Int
                 wm v1 v2 = round
-                    (((v1) * weight + v2) / (weight + 1.0))
+                    ((v1 * weight + v2) / (weight + 1.0))
+
+mixedMember2 :: I.Input -> Double -> I.Parliament
+mixedMember2 input share =
+    mergeParliaments 
+        (plurality I.Input{I.districts=ds1, I.voters=voters, I.numOfParties=numOfParties}) 
+        (multiDistrictProportionality I.Input{I.districts=ds2, I.voters=voters, I.numOfParties=numOfParties})
+    where
+        (ds1, ds2) =
+            unzip
+                (map 
+                    (\(dID, seats) -> 
+                        let pluralitySeats = round $ fromIntegral seats * share
+                        in
+                        (I.District{I.districtID = dID, I.seats = pluralitySeats}, I.District{I.districtID = dID, I.seats=seats - pluralitySeats})
+                    )
+                    (I.numberOfSeatsByDistrict input)
+                )
+        numOfParties = I.numOfParties input
+        voters = I.voters input
+        mergeParliaments :: I.Parliament -> I.Parliament -> I.Parliament
+        mergeParliaments = zipWith (\ (party1, s1) (_, s2) -> (party1, s1 + s2))

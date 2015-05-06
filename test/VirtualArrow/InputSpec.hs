@@ -29,7 +29,7 @@ spec = do
 
     describe "VirtualArrow.Input.numberOfSeatsByDistrict" $
         it "returns the total number of seats" $
-            numberOfSeatsByDistrict input `shouldBe` [4, 2]
+            numberOfSeatsByDistrict input `shouldBe` [(1, 4), (2, 2)]
 
     describe "VirtualArrow.Input.firstChoices" $
         it "returns list of the first choice for each voter" $
