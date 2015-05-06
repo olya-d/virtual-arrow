@@ -18,6 +18,8 @@ module VirtualArrow.Input
     firstChoicesAmongVoters,
     calculateProportion
 ) where
+
+import VirtualArrow.Utils ((/.))
 {- Data types -}
 
 -- List of parties ordered by voter's preference
@@ -82,4 +84,4 @@ numberOfVoters input = length (voters input)
 
 calculateProportion :: Input -> Int -> Int
 calculateProportion input x =  
-    round (fromIntegral x * fromIntegral (numberOfSeats input) / fromIntegral (numberOfVoters input))
+    round ((x * (numberOfSeats input)) /. (numberOfVoters input))

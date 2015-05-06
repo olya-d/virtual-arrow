@@ -105,7 +105,7 @@ distributeSeats result seatsLeft =
         maxQuotaIndex = 
             U.maxIndex (map quota result)
         quota (_, votes, seats) = 
-            fromIntegral votes / (fromIntegral seats * 2.0 + 1.0)
+            votes U./. (seats * 2 + 1)
 
 multiDistrictProportionality :: I.Input -> I.Parliament
 multiDistrictProportionality input =
@@ -114,7 +114,7 @@ multiDistrictProportionality input =
         sainteLague :: (Int, [I.Voter]) -> [(Int, Int)]
         sainteLague (districtID, voters) =
             map
-                (\(party, votes, seats) -> (seats, party))
+                (\(party, _, seats) -> (seats, party))
                 (distributeSeats
                     (map 
                         (\(party, votes) -> (party, votes, 0))

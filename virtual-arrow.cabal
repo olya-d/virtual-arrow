@@ -30,4 +30,4 @@ test-suite tests
   hs-source-dirs:      test, src
   ghc-options:         -Wall
   main-is:             Spec.hs
-  build-depends:       base, hspec2, QuickCheck, bytestring, text, vector, cassava, containers
+  build-depends:       base, hspec, QuickCheck, bytestring, text, vector, cassava, containers

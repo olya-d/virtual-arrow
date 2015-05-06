@@ -28,13 +28,6 @@ votersFactory =
     , Voter{voterID=8, district=2, preferences=[1,2,0], probabilities=[0.5, 0.25, 0.25]}
     ]
 
-partiesFactory :: [Party]
-partiesFactory =
-    [ Party{partyID=0}
-    , Party{partyID=1}
-    , Party{partyID=2}
-    ]
-
 input :: Input
 input = Input{districts=districtsFactory, voters=votersFactory, numOfParties=3}
 

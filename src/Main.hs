@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 import System.Environment (getArgs)
 import Control.Applicative()
@@ -8,15 +9,11 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.Text as T
 import Data.Csv
 import qualified Data.Vector as V
-import Data.List (groupBy, sortBy)
-import Data.Ord (comparing)
-import Data.Function (on)
 
 import qualified VirtualArrow.Input as I
-import VirtualArrow.Election (bordaCount, oneDistrictProportionality)
+import VirtualArrow.Election (oneDistrictProportionality)
 
 {--}
-
 
 {- Definitions of records in CSV files corresponding to custom data types for Data.CSV -}
 
@@ -37,7 +34,6 @@ instance FromNamedRecord I.Party where
         r .: "partyID"
 
 {--}
-
 
 {- Definitons of parsing methods for custom data types for Data.CSV -}
 splitOnColumns :: String -> [T.Text]
@@ -65,24 +61,11 @@ readCSV path = do
     Right c' -> return $ V.toList $ snd c'
 
 
-convertVoterToTuple :: I.Voter -> ([Int], [Float])
-convertVoterToTuple v = (I.preferences v, I.probabilities v)
-
-sortDistrictsById :: [I.District] -> [I.District]
-sortDistrictsById = sortBy (comparing I.districtID)
-
-convertToList :: [I.District] -> [I.Voter] -> [([([Int], [Float])], Int)]
-convertToList districts voters =
-    [(grouped !! i, I.seats (sorted !! i)) | i <- [0..length grouped - 1]]
-    where
-        grouped = [map convertVoterToTuple listOfVoters | listOfVoters <- groupBy ((==) `on` I.district) voters ]
-        sorted = sortDistrictsById districts
-
 main :: IO ()
 main = do
     args <- getArgs
     case args of
-        [dfile, vfile, pfile] -> do
+        [dfile, vfile] -> do
             districts <- readCSV dfile :: IO [I.District]
             voters <- readCSV vfile :: IO [I.Voter]
             print (oneDistrictProportionality I.Input{I.districts=districts, I.voters=voters, I.numOfParties=3})

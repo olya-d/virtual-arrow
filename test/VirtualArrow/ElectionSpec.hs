@@ -2,7 +2,6 @@ module VirtualArrow.ElectionSpec (main, spec) where
 
 import Test.Hspec
 import VirtualArrow.Factory
-import VirtualArrow.Input
 import VirtualArrow.Election
 
 main :: IO ()
