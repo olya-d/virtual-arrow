@@ -6,7 +6,8 @@ module VirtualArrow.Election
     runOffPlurality,
     multiDistrictProportionality,
     mixedMember1,
-    mixedMember2
+    mixedMember2,
+    thresholdProportionality
 ) where
 
 import Data.List (elemIndex, groupBy, maximumBy, sortBy, sort)
@@ -161,3 +162,24 @@ mixedMember2 input share =
         voters = I.voters input
         mergeParliaments :: I.Parliament -> I.Parliament -> I.Parliament
         mergeParliaments = zipWith (\ (party1, s1) (_, s2) -> (party1, s1 + s2))
+
+thresholdProportionality :: I.Input -> Double -> I.Parliament
+thresholdProportionality input threshold =
+    calculateSeats
+        (foldl
+            (\acc (party, votes) ->
+                if fromIntegral votes / fromIntegral (I.numberOfVoters input) < threshold then
+                    acc
+                else
+                    (fst acc + votes, (party, votes):snd acc)
+            )
+            (0, [])
+            (U.frequences $ I.firstChoices input)
+        )
+    where
+        calculateSeats :: (Int, [(Int, Int)]) -> I.Parliament
+        calculateSeats (countedVotes, results) =
+            map (\(party, votes) -> 
+                    (party, round ((fromIntegral votes :: Double) / (fromIntegral countedVotes :: Double) * fromIntegral (I.numberOfSeats input)))
+                )
+            results

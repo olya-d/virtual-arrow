@@ -6,7 +6,9 @@ module VirtualArrow.Factory (
     runOffPluralityResult,
     multiDistrictProportionalityResult,
     mixedMember1Result,
-    mixedMember2Result
+    mixedMember2Result,
+    thresholdProportionalityResult04,
+    thresholdProportionalityResult02
 ) where
 
 import VirtualArrow.Input
@@ -53,3 +55,9 @@ mixedMember1Result = [(0, 4), (1, 2)]
 
 mixedMember2Result :: Parliament
 mixedMember2Result = [(0, 4), (1, 2)]
+
+thresholdProportionalityResult04 :: Parliament
+thresholdProportionalityResult04 = [(1, 6)]
+
+thresholdProportionalityResult02 :: Parliament
+thresholdProportionalityResult02 = [(1, 4), (0, 2)]

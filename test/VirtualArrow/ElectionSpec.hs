@@ -36,3 +36,8 @@ spec = do
     describe "VirtualArrow.Election.mixedMember1Result" $
         it "returns the resulting parliament" $
             mixedMember2 input 0.5 `shouldBe` mixedMember2Result
+
+    describe "VirtualArrow.Election.thresholdProportionalityResult" $
+        it "returns the resulting parliament" $ do
+            thresholdProportionality input 0.4 `shouldBe` thresholdProportionalityResult04
+            thresholdProportionality input 0.2 `shouldBe` thresholdProportionalityResult02
