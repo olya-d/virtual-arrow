@@ -28,3 +28,7 @@ spec = do
     describe "VirtualArrow.Election.multiDistrictProportionality" $
         it "returns the resulting parliament" $
             multiDistrictProportionality input `shouldBe` multiDistrictProportionalityResult
+
+    describe "VirtualArrow.Election.mixedMember1Result" $
+        it "returns the resulting parliament" $
+            mixedMember1 input 0.5 `shouldBe` mixedMember1Result

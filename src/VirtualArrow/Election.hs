@@ -4,10 +4,11 @@ module VirtualArrow.Election
     oneDistrictProportionality,
     plurality,
     runOffPlurality,
-    multiDistrictProportionality
+    multiDistrictProportionality,
+    mixedMember1
 ) where
 
-import Data.List (elemIndex, groupBy, maximumBy, sortBy)
+import Data.List (elemIndex, groupBy, maximumBy, sortBy, sort)
 import qualified VirtualArrow.Input as I
 import qualified VirtualArrow.Utils as U
 import Data.Maybe (fromMaybe)
@@ -122,3 +123,19 @@ multiDistrictProportionality input =
                     )
                     (I.numberOfSeatsByDistrictID input districtID)
                 )
+
+mixedMember1 :: I.Input -> Double -> I.Parliament
+mixedMember1 input weight =
+    weightedParliament 
+        (sort $ multiDistrictProportionality input)
+        (sort $ plurality input)
+    where
+        weightedParliament :: I.Parliament -> I.Parliament -> I.Parliament
+        weightedParliament parliament1 parliament2 =
+            map (\((party1, seats1), (_, seats2)) ->
+                    (party1, wm (fromIntegral seats1) (fromIntegral seats2))
+                ) (zip parliament1 parliament2)
+            where
+                wm :: Double -> Double -> Int
+                wm v1 v2 = round
+                    (((v1) * weight + v2) / (weight + 1.0))
