@@ -20,7 +20,7 @@ spec = do
 
     describe "VirtualArrow.Input.votersByDistrict" $
         it "returns list of voters in the each district" $
-            map (map voterID) (votersByDistrict input) `shouldBe` [[1,2,3,4,5], [6,7,8]]
+            map (\x -> (fst x, map voterID (snd x))) (votersByDistrict input) `shouldBe` [(1, [1,2,3,4,5]), (2, [6,7,8])]
 
     describe "VirtualArrow.Input.numberOfSeatsByDistrictID" $
         it "returns list of number of seats in the district" $ do

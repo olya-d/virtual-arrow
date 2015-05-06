@@ -2,10 +2,11 @@ module VirtualArrow.Election
 (
     bordaCount,
     oneDistrictProportionality,
-    plurality
+    plurality,
+    runOffPlurality
 ) where
 
-import Data.List (elemIndex, groupBy, maximumBy)
+import Data.List (elemIndex, groupBy, maximumBy, sortBy)
 import qualified VirtualArrow.Input as I
 import qualified VirtualArrow.Utils as U
 import Data.Maybe (fromMaybe)
@@ -19,14 +20,14 @@ sumSeatsAcrossDistricts results =
         (groupBy 
             ((==) `on` snd) 
             results
-        )   
+        )  
 
 bordaCount :: I.Input -> I.Parliament
 bordaCount input =
     sumSeatsAcrossDistricts
         (zip 
             (I.numberOfSeatsByDistrict input) 
-            (map (U.minIndex . \vs -> bordaCountAmongVoters vs pn) (I.votersByDistrict input))
+            (map (U.minIndex . \x -> bordaCountAmongVoters (snd x) pn) (I.votersByDistrict input))
         )
     where
         pn = I.numOfParties input
@@ -50,8 +51,45 @@ plurality input =
     sumSeatsAcrossDistricts
         (zip 
             (I.numberOfSeatsByDistrict input) 
-            (map (winner . I.firstChoicesAmongVoters) (I.votersByDistrict input))
+            (map (winner . I.firstChoicesAmongVoters . snd) (I.votersByDistrict input))
         )
     where
         winner choices =
             fst (maximumBy (compare `on` snd) (U.frequences choices))
+
+runOffPlurality :: I.Input -> I.Parliament
+runOffPlurality input =
+    sumSeatsAcrossDistricts
+        (map
+            ((\(dID, parties) -> 
+                if length parties == 2 then
+                    (dID, runOff (dID, parties))
+                else
+                    (dID, head parties)
+            ) . firstTwoOrOne
+            )
+            (I.votersByDistrict input)
+        )
+    where
+        firstTwoOrOne :: (Int, [I.Voter]) -> (Int, [Int])
+        firstTwoOrOne (districtID, voters) =
+            if majority (snd (head top)) && not (majority (snd (last top))) then
+                (I.numberOfSeatsByDistrictID input districtID, take 1 (map fst top))
+            else
+                (I.numberOfSeatsByDistrictID input districtID, map fst top)
+            where 
+                top :: [(Int, Int)]
+                top = take 2 (sortBy (flip compare `on` snd) (U.frequences $ I.firstChoicesAmongVoters voters))
+                majority :: Int -> Bool
+                majority result = result * 2 >= length voters
+        runOff :: (Int, [Int]) -> Int
+        runOff (districtID, couple) =
+            if 2 * length (filter (\p -> elemIndex fP p > elemIndex sP p) (map I.preferences voters)) > length voters then
+                fP
+            else
+                sP
+            where
+                fP = head couple
+                sP = last couple
+                voters = I.votersByDistrictID input districtID
+

@@ -21,3 +21,7 @@ spec = do
     describe "VirtualArrow.Election.plurality" $
         it "returns the resulting parliament" $
             plurality input `shouldBe` pluralityResult
+
+    describe "VirtualArrow.Election.runOffPlurality" $
+        it "returns the resulting parliament" $
+            runOffPlurality input `shouldBe` runOffPluralityResult

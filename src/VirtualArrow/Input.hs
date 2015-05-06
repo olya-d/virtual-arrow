@@ -59,8 +59,8 @@ listOfNumberOfSeats input = map seats (districts input)
 votersByDistrictID :: Input -> Int -> [Voter]
 votersByDistrictID input dID = filter (\x -> district x == dID) (voters input)
 
-votersByDistrict :: Input -> [[Voter]]
-votersByDistrict input = [votersByDistrictID input i | i <- map districtID (districts input)]
+votersByDistrict :: Input -> [(Int, [Voter])]
+votersByDistrict input = [(i, votersByDistrictID input i) | i <- map districtID (districts input)]
 
 numberOfSeatsByDistrictID :: Input -> Int -> Int
 numberOfSeatsByDistrictID input dID = seats (head $ filter (\x -> districtID x == dID) (districts input))
