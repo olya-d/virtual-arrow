@@ -7,14 +7,18 @@ module VirtualArrow.Election
     multiDistrictProportionality,
     mixedMember1,
     mixedMember2,
-    thresholdProportionality
+    thresholdProportionality,
+    singleTransferableVote
 ) where
 
-import Data.List (elemIndex, groupBy, maximumBy, sortBy, sort)
+import Data.List (elemIndex, groupBy, maximumBy, sortBy, sort, find)
 import qualified VirtualArrow.Input as I
 import qualified VirtualArrow.Utils as U
 import Data.Maybe (fromMaybe)
 import Data.Function (on)
+import qualified Data.Matrix as M
+import qualified Data.Vector as V
+import qualified Data.Map.Strict as Map
 
 
 sumSeatsAcrossDistricts :: [(Int, Int)] -> I.Parliament
@@ -183,3 +187,79 @@ thresholdProportionality input threshold =
                     (party, round ((fromIntegral votes :: Double) / (fromIntegral countedVotes :: Double) * fromIntegral (I.numberOfSeats input)))
                 )
             results
+
+stv :: M.Matrix Double -> [Int]-> Int -> Int -> [Int]
+stv _ winners 0 _ = winners
+stv table winners numberOfSeats numOfCandidates =
+    if numberOfSeats >=1 && numOfCandidates == 1 then 
+        fromMaybe 0 (find (\i -> 0 /= M.getRow i table V.! 0) [1..M.nrows table]) - 1:winners
+    else
+    case winner of
+        Just w ->
+            stv (redistribute w) (w - 1:winners) (numberOfSeats - 1) (numOfCandidates - 1)
+        Nothing ->
+            stv (remove weakest) winners numberOfSeats (numOfCandidates - 1)
+    where
+        weakest :: Int
+        weakest =
+            1 + U.minIndex (map (\i -> length (V.filter (<2.0) (M.getRow i table))) [1..M.nrows table])
+        remove :: Int -> M.Matrix Double
+        remove row =
+            M.transpose (M.fromLists
+                (map (\i -> V.toList (redistributeColumn (M.getCol i table) (row - 1) 1)) [1..numberOfVoters])
+            )
+        winner :: Maybe Int
+        winner =
+            find (\i -> votes i >= quota) [1..M.nrows table]
+        quota :: Double
+        quota =
+            fromIntegral ((floor $ (fromIntegral numberOfVoters :: Double) / ((fromIntegral numberOfSeats :: Double) + 1.0) + 1.0) :: Integer)
+        votes :: Int -> Double
+        votes i = sum (V.filter (<=1.0)  (M.getRow i table))
+        numberOfVoters :: Int
+        numberOfVoters = M.ncols table
+        redistribute :: Int -> M.Matrix Double
+        redistribute w =
+            let surplusUnit = (votes w - quota) / votes w
+            in
+            M.transpose (M.fromLists
+                (map (\i -> V.toList (redistributeColumn (M.getCol i table) (w - 1) surplusUnit)) [1..numberOfVoters])
+            )
+        redistributeColumn :: V.Vector Double -> Int -> Double -> V.Vector Double
+        redistributeColumn column w weight =
+            if column V.! w <= 1 then
+                V.imap
+                    (\i x -> if i == w then 0 else
+                        if x > 2 then x - 1
+                        else
+                            if x == 2 then column V.! w * weight 
+                            else x
+                    )
+                    column
+            else
+                column V.// [(w, 0.0)]
+
+singleTransferableVote :: I.Input -> Map.Map Int Int -> I.Parliament
+singleTransferableVote input candidates'Party =
+    map 
+        (\g -> (fst (head g), sum (map snd g)))
+        (groupBy ((==) `on` fst)
+            (concatMap
+                (\(dID, voters) ->
+                    U.frequences
+                        (map
+                            (\candidate -> candidates'Party Map.! candidate)
+                            (stv
+                                (table voters)
+                                []
+                                (I.numberOfSeatsByDistrictID input dID)
+                                (I.numOfParties input)
+                            )
+                        )
+                )
+                (I.votersByDistrict input)
+            )
+        )
+    where
+        table vs =
+            M.fromLists (map (\i -> map (\v -> 1 + fromIntegral ( fromMaybe 0 ( elemIndex i (I.preferences v)))) vs) [0..I.numOfParties input - 1])

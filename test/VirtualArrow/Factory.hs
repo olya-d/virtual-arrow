@@ -1,5 +1,6 @@
 module VirtualArrow.Factory (
-    input, 
+    input,
+    input2,
     oneDistrictProportionalityResult, 
     bordaCountResult,
     pluralityResult,
@@ -8,7 +9,8 @@ module VirtualArrow.Factory (
     mixedMember1Result,
     mixedMember2Result,
     thresholdProportionalityResult04,
-    thresholdProportionalityResult02
+    thresholdProportionalityResult02,
+    singleTransferableVoteResult
 ) where
 
 import VirtualArrow.Input
@@ -18,6 +20,12 @@ districtsFactory :: [District]
 districtsFactory =
     [ District{districtID=1, seats=4}
     , District{districtID=2, seats=2}
+    ]
+
+districtsFactory2 :: [District]
+districtsFactory2 =
+    [ District{districtID=1, seats=2}
+    , District{districtID=2, seats=1}
     ]
 
 votersFactory :: [Voter]
@@ -34,6 +42,9 @@ votersFactory =
 
 input :: Input
 input = Input{districts=districtsFactory, voters=votersFactory, numOfParties=3}
+
+input2 :: Input
+input2 = Input{districts=districtsFactory2, voters=votersFactory, numOfParties=3}
 
 oneDistrictProportionalityResult :: Parliament
 oneDistrictProportionalityResult = [(0, 2), (1, 4)]
@@ -61,3 +72,6 @@ thresholdProportionalityResult04 = [(1, 6)]
 
 thresholdProportionalityResult02 :: Parliament
 thresholdProportionalityResult02 = [(1, 4), (0, 2)]
+
+singleTransferableVoteResult :: Parliament
+singleTransferableVoteResult = [(0, 3)]

@@ -3,6 +3,7 @@ module VirtualArrow.ElectionSpec (main, spec) where
 import Test.Hspec
 import VirtualArrow.Factory
 import VirtualArrow.Election
+import qualified Data.Map as M
 
 main :: IO ()
 main = hspec spec
@@ -29,15 +30,19 @@ spec = do
         it "returns the resulting parliament" $
             multiDistrictProportionality input `shouldBe` multiDistrictProportionalityResult
 
-    describe "VirtualArrow.Election.mixedMember1Result" $
+    describe "VirtualArrow.Election.mixedMember1" $
         it "returns the resulting parliament" $
             mixedMember1 input 0.5 `shouldBe` mixedMember1Result
 
-    describe "VirtualArrow.Election.mixedMember1Result" $
+    describe "VirtualArrow.Election.mixedMember2" $
         it "returns the resulting parliament" $
             mixedMember2 input 0.5 `shouldBe` mixedMember2Result
 
-    describe "VirtualArrow.Election.thresholdProportionalityResult" $
+    describe "VirtualArrow.Election.thresholdProportionality" $
         it "returns the resulting parliament" $ do
             thresholdProportionality input 0.4 `shouldBe` thresholdProportionalityResult04
             thresholdProportionality input 0.2 `shouldBe` thresholdProportionalityResult02
+
+    describe "VirtualArrow.Election.singleTransferableVote" $
+        it "returns the resulting parliament" $
+            singleTransferableVote input2 (M.fromList [(0, 0), (1, 0), (2, 1)]) `shouldBe` singleTransferableVoteResult

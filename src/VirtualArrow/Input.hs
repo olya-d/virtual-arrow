@@ -8,6 +8,7 @@ module VirtualArrow.Input
     Party(..),
     Input(..),
     listOfNumberOfSeats,
+    voterByID,
     votersByDistrictID,
     votersByDistrict,
     numberOfSeats,
@@ -57,6 +58,9 @@ data Input = Input
 
 listOfNumberOfSeats :: Input -> [Int]
 listOfNumberOfSeats input = map seats (districts input)
+
+voterByID :: Input -> Int -> Voter
+voterByID input vID = head (filter (\v -> voterID v == vID) (voters input))
 
 votersByDistrictID :: Input -> Int -> [Voter]
 votersByDistrictID input dID = filter (\x -> district x == dID) (voters input)
