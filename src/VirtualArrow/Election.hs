@@ -11,7 +11,7 @@ module VirtualArrow.Election
     singleTransferableVote
 ) where
 
-import Data.List (elemIndex, groupBy, maximumBy, sortBy, sort, find)
+import Data.List (groupBy, maximumBy, sortBy, sort, find)
 import qualified VirtualArrow.Input as I
 import qualified VirtualArrow.Utils as U
 import Data.Maybe (fromMaybe)
@@ -19,6 +19,7 @@ import Data.Function (on)
 import qualified Data.Matrix as M
 import qualified Data.Vector as V
 import qualified Data.Map.Strict as Map
+import Control.Arrow ((***))
 
 
 sumSeatsAcrossDistricts :: [(I.NumberOfSeats, I.Party)] -> I.Parliament
@@ -30,21 +31,28 @@ sumSeatsAcrossDistricts results =
             results
         )
 
+-- | If voter placed party on the first place, it receives 0 points,
+-- | on the second - 1 point and so on till n - 1 points.
+-- | Under the Borda Count a candidate with the least number of votes wins.
+bordaWinner :: [I.Voter] -> I.Party
+bordaWinner [] = error "Can't find a winner without voters."
+bordaWinner voters =
+    V.minIndex (foldl accVotes (V.replicate nparties 0) voters)
+  where
+    nparties :: Int
+    nparties = length $ I.preferences (head voters)
+    accVotes :: V.Vector Int -> I.Voter -> V.Vector Int
+    accVotes acc voter =
+        V.zipWith (+) acc (I.prefToPlaces (I.preferences voter))
+
+-- | Find the Borda Winner in each district. The winner gets all seats.
+-- | Sum seats across districts.
 bordaCount :: I.Input -> I.Parliament
 bordaCount input =
     sumSeatsAcrossDistricts $
         map
-            (\(did, voters) -> 
-                (I.numberOfSeatsByDistrictID input did, V.minIndex $ bordaCountAmongVoters voters)
-            )
-            (I.votersByDistrict input)
-  where
-    bordaCountAmongVoters :: [I.Voter] -> V.Vector Int
-    bordaCountAmongVoters voters =
-        foldl accVotes (V.replicate (I.nparties input) 0) 
-    accVotes :: V.Vector Int -> I.Voter -> V.Vector Int
-    accVotes acc voter =
-        V.zipWith (+) acc (I.prefToPlaces (I.preferences voter))
+            (I.numberOfSeatsByDistrictID input *** bordaWinner)
+            (I.votersByDistrict input) -- [(I.DistrictID, [I.Voter])]
 
 oneDistrictProportionality :: I.Input -> I.Parliament
 oneDistrictProportionality input = 
