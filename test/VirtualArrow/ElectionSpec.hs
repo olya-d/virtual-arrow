@@ -30,9 +30,17 @@ spec = do
         it "returns the resulting parliament" $
             multiDistrictProportionality input `shouldBe` multiDistrictProportionalityResult
 
-    describe "VirtualArrow.Election.mixedMember1" $
+    describe "VirtualArrow.Election.mixedMember1 with 0" $
         it "returns the resulting parliament" $
-            mixedMember1 input 0.5 `shouldBe` mixedMember1Result
+            mixedMember1 input 0 `shouldBe` multiDistrictProportionalityResult
+
+    describe "VirtualArrow.Election.mixedMember1 with 1" $
+        it "returns the resulting parliament" $
+            mixedMember1 input 1 `shouldBe` pluralityResult
+
+    describe "VirtualArrow.Election.mixedMember1 with 0.5" $
+        it "returns the resulting parliament" $
+            mixedMember1 input 0.5 `shouldBe` mixedMember1Result05
 
     describe "VirtualArrow.Election.mixedMember2" $
         it "returns the resulting parliament" $
@@ -40,7 +48,7 @@ spec = do
 
     describe "VirtualArrow.Election.thresholdProportionality" $
         it "returns the resulting parliament" $ do
-            thresholdProportionality input 0.4 `shouldBe` thresholdProportionalityResult04
+            thresholdProportionality input 0.5 `shouldBe` thresholdProportionalityResult05
             thresholdProportionality input 0.2 `shouldBe` thresholdProportionalityResult02
 
     describe "VirtualArrow.Election.singleTransferableVote" $

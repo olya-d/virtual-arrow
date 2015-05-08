@@ -2,6 +2,8 @@ module VirtualArrow.Input
 (
     Preferences,
     Parliament,
+    DistrictID,
+    VoterID,
     District(..),
     Voter(..),
     Input(..),

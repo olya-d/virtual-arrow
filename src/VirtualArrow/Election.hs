@@ -11,7 +11,7 @@ module VirtualArrow.Election
     singleTransferableVote
 ) where
 
-import Data.List (groupBy, maximumBy, sortBy, sort, find)
+import Data.List (groupBy, maximumBy, sortBy, sort, find, findIndex)
 import qualified VirtualArrow.Input as I
 import qualified VirtualArrow.Utils as U
 import Data.Maybe (fromMaybe)
@@ -19,10 +19,11 @@ import Data.Function (on)
 import qualified Data.Matrix as M
 import qualified Data.Vector as V
 import qualified Data.Map.Strict as Map
-import Control.Arrow ((***))
+import Control.Arrow ((***), second)
 
+type PartyResult = (I.NumberOfSeats, I.Party)
 
-sumSeatsAcrossDistricts :: [(I.NumberOfSeats, I.Party)] -> I.Parliament
+sumSeatsAcrossDistricts :: [PartyResult] -> I.Parliament
 sumSeatsAcrossDistricts results =
     map
         (\g -> (snd (head g), sum (map fst g))) 
@@ -30,6 +31,10 @@ sumSeatsAcrossDistricts results =
             ((==) `on` snd) 
             results
         )
+
+{--------------------------------------------------------------------
+  Borda Count 
+--------------------------------------------------------------------}
 
 -- | If voter placed party on the first place, it receives 0 points,
 -- | on the second - 1 point and so on till n - 1 points.
@@ -54,221 +59,318 @@ bordaCount input =
             (I.numberOfSeatsByDistrictID input *** bordaWinner)
             (I.votersByDistrict input) -- [(I.DistrictID, [I.Voter])]
 
+{--------------------------------------------------------------------
+  One-district Proportionality
+--------------------------------------------------------------------}
+
+-- | The districts are aggregated, the seats in the parliament are distributed
+-- | according to the shares of (first) votes in the electorate.
 oneDistrictProportionality :: I.Input -> I.Parliament
-oneDistrictProportionality input = 
+oneDistrictProportionality input =
     map
-        (\x -> (fst x, I.calculateProportion input (snd x))) 
+        (second (I.calculateProportion input))
         (U.frequences $ I.firstChoices input)
 
+{--------------------------------------------------------------------
+  Plurality
+--------------------------------------------------------------------}
+
+-- | The candidate (i.e. the party) with the most votes wins in each district.
 plurality :: I.Input -> I.Parliament
 plurality input =
     sumSeatsAcrossDistricts $
-        zip 
-            (map snd (I.numberOfSeatsByDistrict input))
-            (map 
-                (winner . I.firstChoicesAmongVoters . snd) 
-                (I.votersByDistrict input)
-            )
-    where
-        winner choices =
-            fst $ maximumBy (compare `on` snd) (U.frequences choices)
+        map 
+            (I.numberOfSeatsByDistrictID input *** winner)
+            (I.votersByDistrict input)
+  where
+    winner :: [I.Voter] -> I.Party
+    winner voters =
+        fst $ 
+            maximumBy
+                (compare `on` snd)
+                (U.frequences (I.firstChoicesAmongVoters voters))
 
+{--------------------------------------------------------------------
+  Run-off Plurality
+--------------------------------------------------------------------} 
+
+-- | In each district all parties but the two with the most votes are excluded.
+-- | The second round is implemented with these two parties only and 
+-- | the one with the most votes wins. 
+-- | If after the first round the first party has at least 50% of the votes, 
+-- | it is elected without the need of a second round. 
 runOffPlurality :: I.Input -> I.Parliament
 runOffPlurality input =
     sumSeatsAcrossDistricts $
         map
-            ((\(dID, parties) -> 
-                if length parties == 2 then
-                    (dID, runOff (dID, parties))
-                else
-                    (dID, head parties)
-            ) . firstTwoOrOne)
+            (I.numberOfSeatsByDistrictID input *** winner)
             (I.votersByDistrict input)
-    where
-        firstTwoOrOne :: (Int, [I.Voter]) -> (Int, [Int])
-        firstTwoOrOne (districtID, voters) =
-            if majority (snd $ head top) && not (majority (snd $ last top)) 
-            then
-                (I.numberOfSeatsByDistrictID input districtID, take 1 (map fst top))
-            else
-                (I.numberOfSeatsByDistrictID input districtID, map fst top)
-            where 
-                top :: [(Int, Int)]
-                top =
-                    take 2 
-                        (sortBy (flip compare `on` snd) 
-                        (U.frequences $ I.firstChoicesAmongVoters voters))
-                majority :: Int -> Bool
-                majority result = result * 2 >= length voters
-        runOff :: (Int, [Int]) -> Int
-        runOff (districtID, couple) =
-            if 2 * length (filter (\p -> V.elemIndex fP p > V.elemIndex sP p) (map I.preferences voters)) > length voters then
-                fP
-            else
-                sP
-            where
-                fP = head couple
-                sP = last couple
-                voters = I.votersByDistrictID input districtID
+  where
+    winner :: [I.Voter] -> I.Party
+    winner voters =
+         -- TODO: when both parties have 50% (run-off is meaningless)
+        case top2 of
+            [(party, _)] -> party
+            [(p1, v1), (p2, _)] ->
+                if hasMajority v1 then p1 else runOff p1 p2
+      where
+        top2 :: [(I.Party, Int)]
+        top2 =
+            take 2 $
+                sortBy
+                    (flip compare `on` snd)
+                    (U.frequences $ I.firstChoicesAmongVoters voters)
+        hasMajority :: Int -> Bool
+        hasMajority votes = length voters <= (votes * 2)
+        runOff :: I.Party -> I.Party -> I.Party
+        runOff p1 p2
+            | 2 * U.count (prefer1 . I.preferences) voters > length voters = p1
+            | otherwise                                                    = p2
+          where
+            prefer1 preferences =
+                V.elemIndex p1 preferences > V.elemIndex p2 preferences
+       
+{--------------------------------------------------------------------
+  Multi-district proportionality 
+--------------------------------------------------------------------} 
 
-distributeSeats :: [(Int, Int, Int)] -> Int-> [(Int, Int, Int)]
-distributeSeats result 0 = result
+-- | In each district seats are allocated using Sainte-Laguë method:
+-- | successive quotients are calculated for each party, whichever party has
+-- | the highest quotient gets the next seat allocated.
+-- | The process is repeated until all seats have been allocated.
+
+-- | [(I.Party, number of votes, number of allocated seats)] --> seats left ->
+-- | [(I.Party, number of allocated seats)]
+distributeSeats :: V.Vector (I.Party, Int, I.NumberOfSeats) -> Int-> [PartyResult]
+distributeSeats result 0 = V.toList $ V.map (\(p, _, s) -> (s, p)) result
 distributeSeats result seatsLeft =
-    let (x,(party, votes, currSeats):y) = splitAt (maxQuotaIndex - 1) result
-    in
-    distributeSeats (x ++ [(party, votes, currSeats + 1)] ++ y) (seatsLeft - 1)
-    where
-        maxQuotaIndex = 
-            U.maxIndex (map quota result)
-        quota (_, votes, seats) = 
-            votes U./. (seats * 2 + 1)
+    distributeSeats 
+        (result V.// [(maxQuotaIndex, (party, votes, currSeats + 1))])
+        (seatsLeft - 1)
+  where
+    (party, votes, currSeats) = result V.! maxQuotaIndex
+    maxQuotaIndex :: Int
+    maxQuotaIndex = V.maxIndex (V.map quota result)
+    quota :: (I.Party, Int, Int) -> Double
+    quota (_, v, s) = v U./. (s * 2 + 1)
 
 multiDistrictProportionality :: I.Input -> I.Parliament
 multiDistrictProportionality input =
-    sumSeatsAcrossDistricts $ concatMap sainteLague (I.votersByDistrict input)
-    where
-        sainteLague :: (Int, [I.Voter]) -> [(Int, Int)]
-        sainteLague (districtID, voters) =
-            map
-                (\(party, _, seats) -> (seats, party))
-                (distributeSeats
-                    (map 
-                        (\(party, votes) -> (party, votes, 0))
-                        (U.frequences (I.firstChoicesAmongVoters voters))
-                    )
-                    (I.numberOfSeatsByDistrictID input districtID)
-                )
+    sumSeatsAcrossDistricts $
+        -- concatMap is used, since district does not have a single winner
+        concatMap sainteLague (I.votersByDistrict input)
+  where
+    sainteLague :: (I.DistrictID, [I.Voter]) -> [PartyResult]
+    sainteLague (districtID, voters) =
+        distributeSeats
+            (V.fromList $
+                map 
+                    (\(party, votes) -> (party, votes, 0))
+                    (U.frequences (I.firstChoicesAmongVoters voters))
+            )
+            (I.numberOfSeatsByDistrictID input districtID)
+
+{--------------------------------------------------------------------
+  Mixed Member System, 1 
+--------------------------------------------------------------------} 
+
+-- | One parliament is elected with the Plurality System,
+-- | and one with Proportional System.
+-- | The resulting parliament is a weighted mean of the two.
+-- | Weight of the first parliament relative to the second is specified.
 
 mixedMember1 :: I.Input -> Double -> I.Parliament
 mixedMember1 input weight =
     weightedParliament 
         (sort $ plurality input)
         (sort $ multiDistrictProportionality input)
-    where
-        weightedParliament :: I.Parliament -> I.Parliament -> I.Parliament
-        weightedParliament parliament1 parliament2 =
-            map (\((party1, seats1), (_, seats2)) ->
-                    (party1, wm (fromIntegral seats1) (fromIntegral seats2))
-                ) (zip parliament1 parliament2)
-            where
-                wm :: Double -> Double -> Int
-                wm v1 v2 = round
-                    ((v1 * weight + v2) / (weight + 1.0))
+  where
+    weightedParliament :: I.Parliament -> I.Parliament -> I.Parliament
+    weightedParliament =
+        zipWith
+            (\(party1, seats1) (_, seats2) ->
+                (party1, mean (fromIntegral seats1) (fromIntegral seats2))
+            )
+      where
+        mean :: Double -> Double -> Int
+        mean v1 v2 = round (v1 * weight + (1 - weight) * v2)
+
+{--------------------------------------------------------------------
+  Mixed Member System, 2
+--------------------------------------------------------------------} 
+
+-- | Part of parliament is elected with the Plurality System is computed,
+-- | and the remainder is elected using the Proportional System.
+-- | Share of seats to be elected with the Plurality System is specified.
 
 mixedMember2 :: I.Input -> Double -> I.Parliament
 mixedMember2 input share =
     mergeParliaments 
-        (plurality I.Input{I.districts=ds1, I.voters=voters, I.nparties=numberOfParties}) 
-        (multiDistrictProportionality I.Input{I.districts=ds2, I.voters=voters, I.nparties=numberOfParties})
+        (plurality 
+            I.Input
+            { I.districts=pluralityDistricts
+            , I.voters=I.voters input
+            , I.nparties=I.nparties input
+            }
+        ) 
+        (multiDistrictProportionality
+            I.Input
+            { I.districts=proportionalityDistricts
+            , I.voters=I.voters input
+            , I.nparties=I.nparties input
+            }
+        )
     where
-        (ds1, ds2) =
-            unzip
-                (map 
-                    (\(dID, seats) -> 
-                        let pluralitySeats = round $ fromIntegral seats * share
-                        in
-                        (I.District{I.districtID = dID, I.nseats = pluralitySeats}, I.District{I.districtID = dID, I.nseats=seats - pluralitySeats})
-                    )
-                    (I.numberOfSeatsByDistrict input)
-                )
-        numberOfParties = I.nparties input
-        voters = I.voters input
+        (pluralityDistricts, proportionalityDistricts) =
+            unzip $ map twoNewDistricts (I.districts input)
+        twoNewDistricts :: I.District -> (I.District, I.District)
+        twoNewDistricts district =
+            (I.District
+            { I.districtID=I.districtID district
+            , I.nseats=pluralitySeats}, 
+            I.District
+            { I.districtID=I.districtID district
+            , I.nseats=I.nseats district - pluralitySeats})
+          where
+            pluralitySeats = round $ fromIntegral (I.nseats district) * share
         mergeParliaments :: I.Parliament -> I.Parliament -> I.Parliament
-        mergeParliaments = zipWith (\ (party1, s1) (_, s2) -> (party1, s1 + s2))
+        mergeParliaments = zipWith (\(p, s1) (_, s2) -> (p, s1 + s2))
+
+{--------------------------------------------------------------------
+  Threshold Proportionality
+--------------------------------------------------------------------} 
+
+-- | All the parties who have a share of votes (strictly) smaller  
+-- | are excluded from the parliament. 
+-- | The seats are distributed proportionally among the remaining parties. 
+-- | There is only one district.
 
 thresholdProportionality :: I.Input -> Double -> I.Parliament
 thresholdProportionality input threshold =
-    calculateSeats
-        (foldl
-            (\acc (party, votes) ->
-                if fromIntegral votes / fromIntegral (I.nvoters input) < threshold then
-                    acc
-                else
-                    (fst acc + votes, (party, votes):snd acc)
-            )
-            (0, [])
-            (U.frequences $ I.firstChoices input)
-        )
-    where
-        calculateSeats :: (Int, [(Int, Int)]) -> I.Parliament
-        calculateSeats (countedVotes, results) =
-            map (\(party, votes) -> 
-                    (party, round ((fromIntegral votes :: Double) / (fromIntegral countedVotes :: Double) * fromIntegral (I.parliamentSize input)))
-                )
-            results
+    calculateSeats $
+        filter ((>= requiredVotes) . snd) (U.frequences $ I.firstChoices input)
+  where
+    requiredVotes :: Int
+    requiredVotes = round $ threshold * fromIntegral (I.nvoters input)
+    calculateSeats :: [(Int, I.Party)] -> I.Parliament
+    calculateSeats results =
+        map (second seats) results
+      where
+        parliamentSizeToNumberOfCountedVotes :: Double
+        parliamentSizeToNumberOfCountedVotes =
+            fromIntegral (I.parliamentSize input) /
+            fromIntegral (sum $ map snd results)
+        seats :: Int -> Int
+        seats votes =
+            round (fromIntegral votes * parliamentSizeToNumberOfCountedVotes)
 
-stv :: M.Matrix Double -> [Int]-> Int -> Int -> [Int]
+{--------------------------------------------------------------------
+  Single Transferable Vote
+--------------------------------------------------------------------} 
+
+-- | The seats for each party in each district are assigned 
+-- | according to a quota value. If some seats are not assigned, 
+-- | the votes unused by the elected candidates are transferred 
+-- | to the next candidate in the elector's preference ordering,
+-- | and the candidates with the highest number of votes are elected. 
+-- | The operation is repeated until all the seats have been assigned. 
+-- | If at a given round there is no assignment, 
+-- | the candidate with less preference is excluded,
+-- | and its votes are distributed as above. 
+-- | The Droop quota is used and the votes are redistributed using
+-- | the Gregory method (transfers partial votes).
+
+
+-- | The current state (table) is a 2d array, s.t. [i,j] element
+-- | = the order of preference of the ith candidate for the jth voter,
+-- | starting from 1.
+stv :: M.Matrix Double -> [I.Party]-> I.NumberOfSeats -> Int -> [I.Party]
 stv _ winners 0 _ = winners
 stv table winners numberOfSeats numOfCandidates =
-    if numberOfSeats >=1 && numOfCandidates == 1 then 
-        fromMaybe 0 (find (\i -> 0 /= M.getRow i table V.! 0) [1..M.nrows table]) - 1:winners
+    -- if one seat and one candidate is left, 
+    -- find the candidate that was not removed (does not have 0s in the row).
+    if numberOfSeats == 1 && numOfCandidates == 1 then 
+        fromMaybe 0 
+            (findIndex (\r -> 0.0 /= (r V.! 0)) tableRows) - 1:winners
     else
     case winner of
         Just w ->
-            stv (redistribute w) (w - 1:winners) (numberOfSeats - 1) (numOfCandidates - 1)
+            stv 
+                (redistribute w) 
+                (w - 1:winners) 
+                (numberOfSeats - 1)
+                (numOfCandidates - 1)
         Nothing ->
-            stv (remove weakest) winners numberOfSeats (numOfCandidates - 1)
-    where
-        weakest :: Int
-        weakest =
-            1 + U.minIndex (map (\i -> length (V.filter (<2.0) (M.getRow i table))) [1..M.nrows table])
-        remove :: Int -> M.Matrix Double
-        remove row =
-            M.transpose (M.fromLists
-                (map (\i -> V.toList (redistributeColumn (M.getCol i table) (row - 1) 1)) [1..numberOfVoters])
+            stv remove winners numberOfSeats (numOfCandidates - 1)
+  where
+    tableRows = [M.getRow i table | i <- [1..M.nrows table]]
+    tableColumns = [M.getCol i table | i <- [1..M.ncols table]]
+    weakest :: Int
+    weakest = 1 + U.minIndex (map (length . V.filter (<2.0)) tableRows)
+    remove :: M.Matrix Double
+    remove =
+        M.transpose $ M.fromLists $
+            map 
+                (\v -> V.toList $ redistributeColumn v (weakest - 1) 1) 
+                tableColumns
+    winner :: Maybe Int
+    winner =
+        find (\i -> votes i >= quota) [1..M.nrows table]
+    quota :: Double
+    quota =
+        fromIntegral (
+            (floor $ (fromIntegral numberOfVoters :: Double) /
+            ((fromIntegral numberOfSeats :: Double) + 1.0) + 1.0) :: Integer
+        )
+    votes :: Int -> Double
+    votes i = sum $ V.filter (<=1.0) (M.getRow i table)
+    numberOfVoters :: Int
+    numberOfVoters = M.ncols table
+    redistribute :: Int -> M.Matrix Double
+    redistribute w =
+        M.transpose $ M.fromLists
+            (map 
+                (\c -> V.toList (redistributeColumn c (w - 1) surplusUnit)) 
+                tableColumns
             )
-        winner :: Maybe Int
-        winner =
-            find (\i -> votes i >= quota) [1..M.nrows table]
-        quota :: Double
-        quota =
-            fromIntegral ((floor $ (fromIntegral numberOfVoters :: Double) / ((fromIntegral numberOfSeats :: Double) + 1.0) + 1.0) :: Integer)
-        votes :: Int -> Double
-        votes i = sum (V.filter (<=1.0)  (M.getRow i table))
-        numberOfVoters :: Int
-        numberOfVoters = M.ncols table
-        redistribute :: Int -> M.Matrix Double
-        redistribute w =
-            let surplusUnit = (votes w - quota) / votes w
-            in
-            M.transpose (M.fromLists
-                (map (\i -> V.toList (redistributeColumn (M.getCol i table) (w - 1) surplusUnit)) [1..numberOfVoters])
-            )
-        redistributeColumn :: V.Vector Double -> Int -> Double -> V.Vector Double
-        redistributeColumn column w weight =
-            if column V.! w <= 1 then
-                V.imap
-                    (\i x -> if i == w then 0 else
-                        if x > 2 then x - 1
-                        else
-                            if x == 2 then column V.! w * weight 
-                            else x
-                    )
-                    column
-            else
-                column V.// [(w, 0.0)]
+      where
+        surplusUnit = (votes w - quota) / votes w
+    -- Matrix is transposed when the candidate is removed,
+    -- so a columns is redistributed instead of a row.
+    redistributeColumn :: V.Vector Double -> Int -> Double -> V.Vector Double
+    redistributeColumn column w weight =
+        if column V.! w <= 1 then
+            V.imap newValue column
+        else
+            column V.// [(w, 0.0)]
+      where
+        newValue index old
+            | index == w    = 0  -- This is the row we are removing
+            | old > 2       = old - 1 -- Increase preference
+            | old == 2      = column V.! w * weight -- Transfer vote
+            | otherwise     = old
 
+-- | Single Transferable Vote is used with the list of candidates,
+-- | thus the additional parameter (map) is required to determine
+-- | the number of seats for each party.
 singleTransferableVote :: I.Input -> Map.Map Int Int -> I.Parliament
 singleTransferableVote input candidates'Party =
-    map 
-        (\g -> (fst (head g), sum (map snd g)))
-        (groupBy ((==) `on` fst)
-            (concatMap
-                (\(dID, voters) ->
-                    U.frequences
-                        (map
-                            (\candidate -> candidates'Party Map.! candidate)
-                            (stv
-                                (table voters)
-                                []
-                                (I.numberOfSeatsByDistrictID input dID)
-                                (I.nparties input)
-                            )
-                        )
-                )
-                (I.votersByDistrict input)
-            )
-        )
-    where
-        table vs =
-            M.transpose $ M.fromLists (map (V.toList . V.map (fromIntegral . (+1)) . I.prefToPlaces . I.preferences) vs)
+    U.frequences $
+        concatMap
+            (map (candidates'Party Map.!) . stvInDistrict)
+            (I.districts input)
+  where
+    stvInDistrict :: I.District -> [I.Party]
+    stvInDistrict district =
+        stv (table voters) [] (I.nseats district) (I.nparties input)
+      where
+        voters :: [I.Voter]
+        voters = I.votersByDistrictID input (I.districtID district)
+    table :: [I.Voter] -> M.Matrix Double
+    table vs = M.transpose $ M.fromLists (map oneVoterBallot vs)
+    oneVoterBallot :: I.Voter -> [Double]
+    oneVoterBallot voter = 
+        V.toList $ 
+            V.map
+                ((+1) . fromIntegral) 
+                (I.prefToPlaces $ I.preferences voter)

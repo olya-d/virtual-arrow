@@ -6,9 +6,11 @@ module VirtualArrow.Factory (
     pluralityResult,
     runOffPluralityResult,
     multiDistrictProportionalityResult,
-    mixedMember1Result,
+    mixedMember1Result1,
+    mixedMember1Result0,
+    mixedMember1Result05,
     mixedMember2Result,
-    thresholdProportionalityResult04,
+    thresholdProportionalityResult05,
     thresholdProportionalityResult02,
     singleTransferableVoteResult
 ) where
@@ -60,19 +62,25 @@ runOffPluralityResult :: Parliament
 runOffPluralityResult = [(0, 4), (1, 2)]
 
 multiDistrictProportionalityResult :: Parliament
-multiDistrictProportionalityResult = [(0, 4), (1, 2)]
+multiDistrictProportionalityResult = [(0, 2), (1, 4)]
 
-mixedMember1Result :: Parliament
-mixedMember1Result = [(0, 4), (1, 2)]
+mixedMember1Result1 :: Parliament
+mixedMember1Result1 = [(0, 4), (1, 2)]
+
+mixedMember1Result0 :: Parliament
+mixedMember1Result0 = [(0, 2), (1, 4)]
+
+mixedMember1Result05 :: Parliament
+mixedMember1Result05 = [(0, 3), (1, 3)]
 
 mixedMember2Result :: Parliament
-mixedMember2Result = [(0, 4), (1, 2)]
+mixedMember2Result = [(0, 3), (1, 3)]
 
-thresholdProportionalityResult04 :: Parliament
-thresholdProportionalityResult04 = [(1, 6)]
+thresholdProportionalityResult05 :: Parliament
+thresholdProportionalityResult05 = [(1, 6)]
 
 thresholdProportionalityResult02 :: Parliament
-thresholdProportionalityResult02 = [(1, 4), (0, 2)]
+thresholdProportionalityResult02 = [(0, 2), (1, 4)]
 
 singleTransferableVoteResult :: Parliament
 singleTransferableVoteResult = [(0, 3)]

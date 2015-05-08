@@ -1,6 +1,6 @@
 module VirtualArrow.Utils
 (
-    frequences, minIndex, maxIndex, (/.)
+    frequences, minIndex, maxIndex, (/.), count
 ) where
 
 import qualified Data.Map.Strict as Map
@@ -17,3 +17,6 @@ maxIndex list = snd . minimum $ zip list [0 .. ]
 
 (/.) :: Int -> Int -> Double
 (/.) = (/) `on` fromIntegral
+
+count :: (a -> Bool) -> [a] -> Int
+count f = length . filter f
