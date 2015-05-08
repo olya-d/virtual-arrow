@@ -21,37 +21,30 @@ import qualified Data.Vector as V
 import qualified Data.Map.Strict as Map
 
 
-sumSeatsAcrossDistricts :: [(Int, Int)] -> I.Parliament
+sumSeatsAcrossDistricts :: [(I.NumberOfSeats, I.Party)] -> I.Parliament
 sumSeatsAcrossDistricts results =
     map
         (\g -> (snd (head g), sum (map fst g))) 
         (groupBy 
             ((==) `on` snd) 
             results
-        )  
+        )
 
 bordaCount :: I.Input -> I.Parliament
 bordaCount input =
     sumSeatsAcrossDistricts $
-        zip 
-            (map snd (I.numberOfSeatsByDistrict input))
-            (map
-                (U.minIndex . \x -> bordaCountAmongVoters (snd x) pn) 
-                (I.votersByDistrict input)
+        map
+            (\(did, voters) -> 
+                (I.numberOfSeatsByDistrictID input did, V.minIndex $ bordaCountAmongVoters voters)
             )
-    where
-        pn = I.nparties input
-        bordaCountAmongVoters :: [I.Voter] -> Int -> [Int]
-        bordaCountAmongVoters voters numberOfParties =
-            foldl accVotes (replicate numberOfParties 0) voters
-        accVotes :: [Int] -> I.Voter -> [Int]
-        accVotes acc voter =
-            [(acc !! i) + getVote (I.preferences voter) i | i <- [0..length acc - 1]]
-            where
-                getVote preferences partyID = 
-                    fromMaybe 
-                        (error (show partyID ++ show preferences))
-                        (elemIndex partyID preferences) 
+            (I.votersByDistrict input)
+  where
+    bordaCountAmongVoters :: [I.Voter] -> V.Vector Int
+    bordaCountAmongVoters voters =
+        foldl accVotes (V.replicate (I.nparties input) 0) 
+    accVotes :: V.Vector Int -> I.Voter -> V.Vector Int
+    accVotes acc voter =
+        V.zipWith (+) acc (I.prefToPlaces (I.preferences voter))
 
 oneDistrictProportionality :: I.Input -> I.Parliament
 oneDistrictProportionality input = 
@@ -101,7 +94,7 @@ runOffPlurality input =
                 majority result = result * 2 >= length voters
         runOff :: (Int, [Int]) -> Int
         runOff (districtID, couple) =
-            if 2 * length (filter (\p -> elemIndex fP p > elemIndex sP p) (map I.preferences voters)) > length voters then
+            if 2 * length (filter (\p -> V.elemIndex fP p > V.elemIndex sP p) (map I.preferences voters)) > length voters then
                 fP
             else
                 sP
@@ -270,4 +263,4 @@ singleTransferableVote input candidates'Party =
         )
     where
         table vs =
-            M.fromLists (map (\i -> map (\v -> 1 + fromIntegral ( fromMaybe 0 ( elemIndex i (I.preferences v)))) vs) [0..I.nparties input - 1])
+            M.transpose $ M.fromLists (map (V.toList . V.map (fromIntegral . (+1)) . I.prefToPlaces . I.preferences) vs)

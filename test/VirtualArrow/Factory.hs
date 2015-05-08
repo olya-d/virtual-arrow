@@ -14,6 +14,7 @@ module VirtualArrow.Factory (
 ) where
 
 import VirtualArrow.Input
+import qualified Data.Vector as V
 
 
 districtsFactory :: [District]
@@ -30,14 +31,14 @@ districtsFactory2 =
 
 votersFactory :: [Voter]
 votersFactory =
-    [ Voter{voterID=1, district=1, preferences=[0,1,2]}
-    , Voter{voterID=2, district=1, preferences=[1,2,0]}
-    , Voter{voterID=3, district=1, preferences=[0,2,1]}
-    , Voter{voterID=4, district=1, preferences=[0,1,2]}
-    , Voter{voterID=5, district=1, preferences=[1,0,2]}
-    , Voter{voterID=6, district=2, preferences=[1,0,2]}
-    , Voter{voterID=7, district=2, preferences=[1,0,2]}
-    , Voter{voterID=8, district=2, preferences=[1,2,0]}
+    [ Voter{voterID=1, district=1, preferences= V.fromList [0,1,2]}
+    , Voter{voterID=2, district=1, preferences= V.fromList [1,2,0]}
+    , Voter{voterID=3, district=1, preferences= V.fromList [0,2,1]}
+    , Voter{voterID=4, district=1, preferences= V.fromList [0,1,2]}
+    , Voter{voterID=5, district=1, preferences= V.fromList [1,0,2]}
+    , Voter{voterID=6, district=2, preferences= V.fromList [1,0,2]}
+    , Voter{voterID=7, district=2, preferences= V.fromList [1,0,2]}
+    , Voter{voterID=8, district=2, preferences= V.fromList [1,2,0]}
     ]
 
 input :: Input

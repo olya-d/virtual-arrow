@@ -3,12 +3,18 @@ module VirtualArrow.InputSpec (main, spec) where
 import Test.Hspec
 import VirtualArrow.Factory (input)
 import VirtualArrow.Input
+import qualified Data.Vector as V
 
 main :: IO ()
 main = hspec spec
 
 spec :: Spec
 spec = do
+    describe "VirtualArrow.Input.prefToPlaces" $
+        it "changes the list of order of preference to the list of places" $ do
+            prefToPlaces (preferences $ voterByID input 1) `shouldBe` V.fromList [0, 1, 2]
+            prefToPlaces (preferences $ voterByID input 2) `shouldBe` V.fromList [2, 0, 1]
+
     describe "VirtualArrow.Input.listOfNumberOfSeats" $
         it "returns the list of number of seats for every district" $
             listOfNumberOfSeats input `shouldBe` [4, 2]

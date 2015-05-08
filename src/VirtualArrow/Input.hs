@@ -5,6 +5,8 @@ module VirtualArrow.Input
     District(..),
     Voter(..),
     Input(..),
+    Party,
+    NumberOfSeats,
     listOfNumberOfSeats,
     voterByID,
     votersByDistrictID,
@@ -15,9 +17,11 @@ module VirtualArrow.Input
     nvoters,
     firstChoices,
     firstChoicesAmongVoters,
-    calculateProportion
+    calculateProportion,
+    prefToPlaces
 ) where
 
+import qualified Data.Vector as V
 import Data.List (find)
 import Data.Maybe (fromMaybe)
 import VirtualArrow.Utils ((/.))
@@ -26,7 +30,7 @@ import VirtualArrow.Utils ((/.))
 {- Data types -}
 
 -- List of parties ordered by voter's preference
-type Preferences = [Int]
+type Preferences = V.Vector Int
 type Parliament = [(Int, Int)]
 
 type DistrictID = Int
@@ -56,6 +60,17 @@ data Input = Input
     deriving (Show)
 
 
+prefToPlaces :: Preferences -> V.Vector Int
+prefToPlaces preferences =
+    V.map index (V.fromList [0..nparties - 1])
+  where
+    nparties = length preferences
+    index :: Int -> Int
+    index x =
+        fromMaybe
+            (error ("Preferences " ++ show preferences ++ " are not complete."))
+            (x `V.elemIndex` preferences)
+
 -- Private, returns the list of numbers of seats in each district.
 listOfNumberOfSeats :: Input -> [Int]
 listOfNumberOfSeats input = map nseats (districts input)
@@ -82,10 +97,10 @@ numberOfSeatsByDistrict input =
     [(i, numberOfSeatsByDistrictID input i) | i <- map districtID (districts input)]
 
 firstChoices :: Input -> [Party]
-firstChoices input = map (head. preferences) (voters input)
+firstChoices input = map (V.head . preferences) (voters input)
 
 firstChoicesAmongVoters :: [Voter] -> [Party]
-firstChoicesAmongVoters = map (head. preferences)
+firstChoicesAmongVoters = map (V.head . preferences)
 
 parliamentSize :: Input -> NumberOfSeats
 parliamentSize input = sum (listOfNumberOfSeats input)
