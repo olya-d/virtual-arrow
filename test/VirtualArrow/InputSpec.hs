@@ -42,11 +42,11 @@ spec = do
 
     describe "VirtualArrow.Input.numberOfSeats" $
         it "returns the total number of seats" $
-            numberOfSeats input `shouldBe` 6
+            parliamentSize input `shouldBe` 6
 
     describe "VirtualArrow.Input.numberOfVoters" $
         it "returns the total number of voters" $
-            numberOfVoters input `shouldBe` 8
+            nvoters input `shouldBe` 8
 
     describe "VirtualArrow.Input.calculateProportion" $
         it "returns the number of seats based on the number of votes" $ do

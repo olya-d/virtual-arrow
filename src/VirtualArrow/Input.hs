@@ -1,92 +1,98 @@
 module VirtualArrow.Input
 (
     Preferences,
-    Probabilities,
     Parliament,
     District(..),
     Voter(..),
-    Party(..),
     Input(..),
     listOfNumberOfSeats,
     voterByID,
     votersByDistrictID,
     votersByDistrict,
-    numberOfSeats,
+    parliamentSize,
     numberOfSeatsByDistrictID,
     numberOfSeatsByDistrict,
-    numberOfVoters,
+    nvoters,
     firstChoices,
     firstChoicesAmongVoters,
     calculateProportion
 ) where
 
+import Data.List (find)
+import Data.Maybe (fromMaybe)
 import VirtualArrow.Utils ((/.))
+
+
 {- Data types -}
 
 -- List of parties ordered by voter's preference
 type Preferences = [Int]
--- List of probabilities that voter will choose candidate from a party.
-type Probabilities = [Float]
-
 type Parliament = [(Int, Int)]
 
+type DistrictID = Int
+type VoterID = Int
+type NumberOfSeats = Int
+type NumberOfParties = Int
+type Party = Int
+
 data District = District
-    { districtID :: !Int
-    , seats :: !Int
+    { districtID :: !DistrictID
+    , nseats :: !NumberOfSeats
     }
     deriving (Show)
 
 data Voter = Voter
-    { voterID :: !Int
-    , district :: !Int
+    { voterID :: !VoterID
+    , district :: !DistrictID
     , preferences :: Preferences
-    , probabilities :: Probabilities
-    }
-    deriving (Show)
-
-data Party = Party
-    { partyID :: !Int
     }
     deriving (Show)
 
 data Input = Input 
     { districts :: [District]
     , voters :: [Voter]
-    , numOfParties :: !Int
+    , nparties :: !NumberOfParties
     }
+    deriving (Show)
 
 
+-- Private, returns the list of numbers of seats in each district.
 listOfNumberOfSeats :: Input -> [Int]
-listOfNumberOfSeats input = map seats (districts input)
+listOfNumberOfSeats input = map nseats (districts input)
 
-voterByID :: Input -> Int -> Voter
-voterByID input vID = head (filter (\v -> voterID v == vID) (voters input))
+-- Get voter by id.
+voterByID :: Input -> VoterID -> Voter
+voterByID input vId =
+    fromMaybe
+        (error ("Voter with id " ++ show vId ++ " is not found."))
+        (find ((== vId) . voterID) (voters input))
 
-votersByDistrictID :: Input -> Int -> [Voter]
-votersByDistrictID input dID = filter (\x -> district x == dID) (voters input)
+-- Get list of voters by district id.
+votersByDistrictID :: Input -> DistrictID -> [Voter]
+votersByDistrictID input dId = filter ((== dId) . district) (voters input)
 
-votersByDistrict :: Input -> [(Int, [Voter])]
+votersByDistrict :: Input -> [(DistrictID, [Voter])]
 votersByDistrict input = [(i, votersByDistrictID input i) | i <- map districtID (districts input)]
 
-numberOfSeatsByDistrictID :: Input -> Int -> Int
-numberOfSeatsByDistrictID input dID = seats (head $ filter (\x -> districtID x == dID) (districts input))
+numberOfSeatsByDistrictID :: Input -> DistrictID -> NumberOfSeats
+numberOfSeatsByDistrictID input dID = nseats (head $ filter (\x -> districtID x == dID) (districts input))
 
-numberOfSeatsByDistrict :: Input -> [(Int, Int)]
+numberOfSeatsByDistrict :: Input -> [(DistrictID, NumberOfSeats)]
 numberOfSeatsByDistrict input = 
     [(i, numberOfSeatsByDistrictID input i) | i <- map districtID (districts input)]
 
-firstChoices :: Input -> [Int]
+firstChoices :: Input -> [Party]
 firstChoices input = map (head. preferences) (voters input)
 
-firstChoicesAmongVoters :: [Voter] -> [Int]
+firstChoicesAmongVoters :: [Voter] -> [Party]
 firstChoicesAmongVoters = map (head. preferences)
 
-numberOfSeats :: Input -> Int
-numberOfSeats input = sum (listOfNumberOfSeats input)
+parliamentSize :: Input -> NumberOfSeats
+parliamentSize input = sum (listOfNumberOfSeats input)
 
-numberOfVoters :: Input -> Int
-numberOfVoters input = length (voters input)
+nvoters :: Input -> Int
+nvoters input = length (voters input)
 
 calculateProportion :: Input -> Int -> Int
-calculateProportion input x =  
-    round ((x * numberOfSeats input) /. numberOfVoters input)
+calculateProportion input x =
+    round ((x * parliamentSize input) /. nvoters input)

@@ -26,12 +26,7 @@ instance FromNamedRecord I.Voter where
     parseNamedRecord r = I.Voter <$> 
         r .: "voterID" <*>
         r .: "district" <*>
-        r .: "preferences" <*>
-        r .: "probabilities"
-
-instance FromNamedRecord I.Party where
-    parseNamedRecord r = I.Party <$> 
-        r .: "partyID"
+        r .: "preferences"
 
 {--}
 
@@ -44,13 +39,6 @@ instance FromField I.Preferences where
         pure (map (read . T.unpack) (splitOnColumns c) :: I.Preferences)
         where
             c = BC.unpack s
-
-instance FromField I.Probabilities where
-    parseField s = 
-        pure (map (read . T.unpack) (splitOnColumns c) :: I.Probabilities)
-        where
-            c = BC.unpack s
-            
 {--}
 
 readCSV :: FromNamedRecord a => FilePath -> IO [a]
@@ -61,12 +49,12 @@ readCSV path = do
     Right c' -> return $ V.toList $ snd c'
 
 
-main :: IO ()
-main = do
-    args <- getArgs
-    case args of
-        [dfile, vfile] -> do
-            districts <- readCSV dfile :: IO [I.District]
-            voters <- readCSV vfile :: IO [I.Voter]
-            print (oneDistrictProportionality I.Input{I.districts=districts, I.voters=voters, I.numOfParties=3})
-        _ -> error "Wrong number of arguments."
+-- main :: IO ()
+-- main = do
+--     args <- getArgs
+--     case args of
+--         [dfile, vfile] -> do
+--             districts <- readCSV dfile :: IO [I.District]
+--             voters <- readCSV vfile :: IO [I.Voter]
+--             print (oneDistrictProportionality I.Input{I.districts=districts, I.voters=voters, I.numOfParties=3})
+--         _ -> error "Wrong number of arguments."

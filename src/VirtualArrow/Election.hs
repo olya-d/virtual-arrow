@@ -32,22 +32,26 @@ sumSeatsAcrossDistricts results =
 
 bordaCount :: I.Input -> I.Parliament
 bordaCount input =
-    sumSeatsAcrossDistricts
-        (zip 
+    sumSeatsAcrossDistricts $
+        zip 
             (map snd (I.numberOfSeatsByDistrict input))
-            (map (U.minIndex . \x -> bordaCountAmongVoters (snd x) pn) (I.votersByDistrict input))
-        )
+            (map
+                (U.minIndex . \x -> bordaCountAmongVoters (snd x) pn) 
+                (I.votersByDistrict input)
+            )
     where
-        pn = I.numOfParties input
+        pn = I.nparties input
         bordaCountAmongVoters :: [I.Voter] -> Int -> [Int]
-        bordaCountAmongVoters voters numOfParties =
-            foldl accVotes (replicate numOfParties 0) voters
+        bordaCountAmongVoters voters numberOfParties =
+            foldl accVotes (replicate numberOfParties 0) voters
         accVotes :: [Int] -> I.Voter -> [Int]
         accVotes acc voter =
             [(acc !! i) + getVote (I.preferences voter) i | i <- [0..length acc - 1]]
             where
                 getVote preferences partyID = 
-                    fromMaybe (error (show partyID ++ show preferences)) (elemIndex partyID preferences) 
+                    fromMaybe 
+                        (error (show partyID ++ show preferences))
+                        (elemIndex partyID preferences) 
 
 oneDistrictProportionality :: I.Input -> I.Parliament
 oneDistrictProportionality input = 
@@ -57,38 +61,42 @@ oneDistrictProportionality input =
 
 plurality :: I.Input -> I.Parliament
 plurality input =
-    sumSeatsAcrossDistricts
-        (zip 
+    sumSeatsAcrossDistricts $
+        zip 
             (map snd (I.numberOfSeatsByDistrict input))
-            (map (winner . I.firstChoicesAmongVoters . snd) (I.votersByDistrict input))
-        )
+            (map 
+                (winner . I.firstChoicesAmongVoters . snd) 
+                (I.votersByDistrict input)
+            )
     where
         winner choices =
-            fst (maximumBy (compare `on` snd) (U.frequences choices))
+            fst $ maximumBy (compare `on` snd) (U.frequences choices)
 
 runOffPlurality :: I.Input -> I.Parliament
 runOffPlurality input =
-    sumSeatsAcrossDistricts
-        (map
+    sumSeatsAcrossDistricts $
+        map
             ((\(dID, parties) -> 
                 if length parties == 2 then
                     (dID, runOff (dID, parties))
                 else
                     (dID, head parties)
-            ) . firstTwoOrOne
-            )
+            ) . firstTwoOrOne)
             (I.votersByDistrict input)
-        )
     where
         firstTwoOrOne :: (Int, [I.Voter]) -> (Int, [Int])
         firstTwoOrOne (districtID, voters) =
-            if majority (snd (head top)) && not (majority (snd (last top))) then
+            if majority (snd $ head top) && not (majority (snd $ last top)) 
+            then
                 (I.numberOfSeatsByDistrictID input districtID, take 1 (map fst top))
             else
                 (I.numberOfSeatsByDistrictID input districtID, map fst top)
             where 
                 top :: [(Int, Int)]
-                top = take 2 (sortBy (flip compare `on` snd) (U.frequences $ I.firstChoicesAmongVoters voters))
+                top =
+                    take 2 
+                        (sortBy (flip compare `on` snd) 
+                        (U.frequences $ I.firstChoicesAmongVoters voters))
                 majority :: Int -> Bool
                 majority result = result * 2 >= length voters
         runOff :: (Int, [Int]) -> Int
@@ -149,8 +157,8 @@ mixedMember1 input weight =
 mixedMember2 :: I.Input -> Double -> I.Parliament
 mixedMember2 input share =
     mergeParliaments 
-        (plurality I.Input{I.districts=ds1, I.voters=voters, I.numOfParties=numOfParties}) 
-        (multiDistrictProportionality I.Input{I.districts=ds2, I.voters=voters, I.numOfParties=numOfParties})
+        (plurality I.Input{I.districts=ds1, I.voters=voters, I.nparties=numberOfParties}) 
+        (multiDistrictProportionality I.Input{I.districts=ds2, I.voters=voters, I.nparties=numberOfParties})
     where
         (ds1, ds2) =
             unzip
@@ -158,11 +166,11 @@ mixedMember2 input share =
                     (\(dID, seats) -> 
                         let pluralitySeats = round $ fromIntegral seats * share
                         in
-                        (I.District{I.districtID = dID, I.seats = pluralitySeats}, I.District{I.districtID = dID, I.seats=seats - pluralitySeats})
+                        (I.District{I.districtID = dID, I.nseats = pluralitySeats}, I.District{I.districtID = dID, I.nseats=seats - pluralitySeats})
                     )
                     (I.numberOfSeatsByDistrict input)
                 )
-        numOfParties = I.numOfParties input
+        numberOfParties = I.nparties input
         voters = I.voters input
         mergeParliaments :: I.Parliament -> I.Parliament -> I.Parliament
         mergeParliaments = zipWith (\ (party1, s1) (_, s2) -> (party1, s1 + s2))
@@ -172,7 +180,7 @@ thresholdProportionality input threshold =
     calculateSeats
         (foldl
             (\acc (party, votes) ->
-                if fromIntegral votes / fromIntegral (I.numberOfVoters input) < threshold then
+                if fromIntegral votes / fromIntegral (I.nvoters input) < threshold then
                     acc
                 else
                     (fst acc + votes, (party, votes):snd acc)
@@ -184,7 +192,7 @@ thresholdProportionality input threshold =
         calculateSeats :: (Int, [(Int, Int)]) -> I.Parliament
         calculateSeats (countedVotes, results) =
             map (\(party, votes) -> 
-                    (party, round ((fromIntegral votes :: Double) / (fromIntegral countedVotes :: Double) * fromIntegral (I.numberOfSeats input)))
+                    (party, round ((fromIntegral votes :: Double) / (fromIntegral countedVotes :: Double) * fromIntegral (I.parliamentSize input)))
                 )
             results
 
@@ -253,7 +261,7 @@ singleTransferableVote input candidates'Party =
                                 (table voters)
                                 []
                                 (I.numberOfSeatsByDistrictID input dID)
-                                (I.numOfParties input)
+                                (I.nparties input)
                             )
                         )
                 )
@@ -262,4 +270,4 @@ singleTransferableVote input candidates'Party =
         )
     where
         table vs =
-            M.fromLists (map (\i -> map (\v -> 1 + fromIntegral ( fromMaybe 0 ( elemIndex i (I.preferences v)))) vs) [0..I.numOfParties input - 1])
+            M.fromLists (map (\i -> map (\v -> 1 + fromIntegral ( fromMaybe 0 ( elemIndex i (I.preferences v)))) vs) [0..I.nparties input - 1])
