@@ -3,14 +3,11 @@ module VirtualArrow.Input
     Preferences,
     Parliament,
     DistrictID,
-    VoterID,
     District(..),
     Voter(..),
     Input(..),
     Party,
     NumberOfSeats,
-    listOfNumberOfSeats,
-    voterByID,
     votersByDistrictID,
     votersByDistrict,
     parliamentSize,
@@ -24,21 +21,16 @@ module VirtualArrow.Input
 ) where
 
 import qualified Data.Vector as V
-import Data.List (find)
 import Data.Maybe (fromMaybe)
 import VirtualArrow.Utils ((/.))
 
-
-{- Data types -}
 
 -- List of parties ordered by voter's preference
 type Preferences = V.Vector Int
 type Parliament = [(Int, Int)]
 
 type DistrictID = Int
-type VoterID = Int
 type NumberOfSeats = Int
-type NumberOfParties = Int
 type Party = Int
 
 data District = District
@@ -48,7 +40,7 @@ data District = District
     deriving (Show)
 
 data Voter = Voter
-    { voterID :: !VoterID
+    { voterID :: !Int
     , district :: !DistrictID
     , preferences :: Preferences
     }
@@ -57,59 +49,66 @@ data Voter = Voter
 data Input = Input 
     { districts :: [District]
     , voters :: [Voter]
-    , nparties :: !NumberOfParties
+    , nparties :: !Int
     }
     deriving (Show)
 
 
+-- | Returns vector of places,
+-- | s.t. ! i = place of ith party in the list of preferences.
 prefToPlaces :: Preferences -> V.Vector Int
-prefToPlaces preferences =
-    V.map index (V.fromList [0..nparties - 1])
+prefToPlaces pref =
+    V.map index (V.fromList [0..p - 1])
   where
-    nparties = length preferences
+    p = length pref 
     index :: Int -> Int
     index x =
         fromMaybe
-            (error ("Preferences " ++ show preferences ++ " are not complete."))
-            (x `V.elemIndex` preferences)
+            (error ("Preferences " ++ show pref ++ " are not complete."))
+            (x `V.elemIndex` pref)
 
--- Private, returns the list of numbers of seats in each district.
-listOfNumberOfSeats :: Input -> [Int]
-listOfNumberOfSeats input = map nseats (districts input)
+-- | Returns list of district ids.
+districtIDs :: Input -> [DistrictID]
+districtIDs input = map districtID (districts input)
 
--- Get voter by id.
-voterByID :: Input -> VoterID -> Voter
-voterByID input vId =
-    fromMaybe
-        (error ("Voter with id " ++ show vId ++ " is not found."))
-        (find ((== vId) . voterID) (voters input))
-
--- Get list of voters by district id.
+-- | Returns list of voters by district id.
 votersByDistrictID :: Input -> DistrictID -> [Voter]
 votersByDistrictID input dId = filter ((== dId) . district) (voters input)
 
+-- | Returns list of pairs (district id, voters in the district).
 votersByDistrict :: Input -> [(DistrictID, [Voter])]
-votersByDistrict input = [(i, votersByDistrictID input i) | i <- map districtID (districts input)]
+votersByDistrict input =
+    [(i, votersByDistrictID input i) | i <- districtIDs input]
 
+-- | Returns number of seats by district id.
 numberOfSeatsByDistrictID :: Input -> DistrictID -> NumberOfSeats
-numberOfSeatsByDistrictID input dID = nseats (head $ filter (\x -> districtID x == dID) (districts input))
+numberOfSeatsByDistrictID input dID = 
+    nseats (head $ filter (\x -> districtID x == dID) (districts input))
 
+-- | Returns list of pairs (district id, number of seats in the district).
 numberOfSeatsByDistrict :: Input -> [(DistrictID, NumberOfSeats)]
 numberOfSeatsByDistrict input = 
-    [(i, numberOfSeatsByDistrictID input i) | i <- map districtID (districts input)]
+    [(i, numberOfSeatsByDistrictID input i) | i <- districtIDs input]
 
+-- | Returns list of first choices (first preference) 
+-- | for each voter in the input.
 firstChoices :: Input -> [Party]
 firstChoices input = map (V.head . preferences) (voters input)
 
+-- | Returns list of first choices (first preference) for each voter
+-- | in the list.
 firstChoicesAmongVoters :: [Voter] -> [Party]
 firstChoicesAmongVoters = map (V.head . preferences)
 
+-- | = total number of seats.
 parliamentSize :: Input -> NumberOfSeats
-parliamentSize input = sum (listOfNumberOfSeats input)
+parliamentSize input = sum (map nseats (districts input))
 
+-- | = total number of voters.
 nvoters :: Input -> Int
 nvoters input = length (voters input)
 
+-- | Returns proportion of parliament corresponding to x (number of votes). 
 calculateProportion :: Input -> Int -> Int
 calculateProportion input x =
     round ((x * parliamentSize input) /. nvoters input)

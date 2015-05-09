@@ -12,12 +12,8 @@ spec :: Spec
 spec = do
     describe "VirtualArrow.Input.prefToPlaces" $
         it "changes the list of order of preference to the list of places" $ do
-            prefToPlaces (preferences $ voterByID input 1) `shouldBe` V.fromList [0, 1, 2]
-            prefToPlaces (preferences $ voterByID input 2) `shouldBe` V.fromList [2, 0, 1]
-
-    describe "VirtualArrow.Input.listOfNumberOfSeats" $
-        it "returns the list of number of seats for every district" $
-            listOfNumberOfSeats input `shouldBe` [4, 2]
+            prefToPlaces (V.fromList [0,1,2]) `shouldBe` V.fromList [0, 1, 2]
+            prefToPlaces (V.fromList [1,2,0]) `shouldBe` V.fromList [2, 0, 1]
 
     describe "VirtualArrow.Input.votersByDistrictID" $
         it "returns list of voters in the district" $ do

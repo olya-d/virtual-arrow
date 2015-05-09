@@ -131,7 +131,7 @@ runOffPlurality input =
                 V.elemIndex p1 preferences > V.elemIndex p2 preferences
        
 {--------------------------------------------------------------------
-  Multi-district proportionality 
+  Multi-district pro®portionality 
 --------------------------------------------------------------------} 
 
 -- | In each district seats are allocated using Sainte-Laguë method:
