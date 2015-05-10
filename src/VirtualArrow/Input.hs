@@ -28,11 +28,12 @@ import VirtualArrow.Utils ((/.))
 
 -- List of parties ordered by voter's preference
 type Preferences = V.Vector Int
-type Parliament = [(Int, Int)]
 
 type DistrictID = Int
 type NumberOfSeats = Int
 type Party = Int
+
+type Parliament = [(Party, NumberOfSeats)]
 
 data Candidate = Candidate
     { candidateID :: Int

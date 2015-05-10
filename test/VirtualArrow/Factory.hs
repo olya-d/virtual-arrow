@@ -3,6 +3,7 @@ module VirtualArrow.Factory (
     input2,
     oneDistrictProportionalityResult, 
     bordaCountResult,
+    bordaCountR,
     pluralityResult,
     runOffPluralityResult,
     multiDistrictProportionalityResult,
@@ -10,6 +11,7 @@ module VirtualArrow.Factory (
     mixedMember1Result0,
     mixedMember1Result05,
     mixedMember2Result,
+    mixedMember2R,
     thresholdProportionalityResult05,
     thresholdProportionalityResult02,
     singleTransferableVoteResult
@@ -54,6 +56,8 @@ oneDistrictProportionalityResult = [(0, 2), (1, 4)]
 
 bordaCountResult :: Parliament
 bordaCountResult = [(0, 4), (1, 2)]
+bordaCountR :: Double
+bordaCountR = sqrt(1/2 * (4 + 4))/6*100
 
 pluralityResult :: Parliament
 pluralityResult = [(0, 4), (1, 2)]
@@ -75,6 +79,8 @@ mixedMember1Result05 = [(0, 3), (1, 3)]
 
 mixedMember2Result :: Parliament
 mixedMember2Result = [(0, 3), (1, 3)]
+mixedMember2R :: Double
+mixedMember2R = sqrt(1/2 * (1 + 1))/6*100
 
 thresholdProportionalityResult05 :: Parliament
 thresholdProportionalityResult05 = [(1, 6)]
@@ -84,3 +90,4 @@ thresholdProportionalityResult02 = [(0, 2), (1, 4)]
 
 singleTransferableVoteResult :: Parliament
 singleTransferableVoteResult = [(0, 3)]
+
