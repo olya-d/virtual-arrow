@@ -1,60 +1,51 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-import System.Environment (getArgs)
-import Control.Applicative()
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.ByteString.Char8 as BC
-import qualified Data.Text as T
-import Data.Csv
-import qualified Data.Vector as V
+import qualified Interface.ReadCsv as Csv
+import qualified Interface.CommandLine as CL
 
-import qualified VirtualArrow.Input as I
-import VirtualArrow.Election (oneDistrictProportionality)
-
-{--}
-
-{- Definitions of records in CSV files corresponding to custom data types for Data.CSV -}
-
-instance FromNamedRecord I.District where
-    parseNamedRecord r = I.District <$> 
-        r .: "districtID" <*> 
-        r .: "seats"
-
-instance FromNamedRecord I.Voter where
-    parseNamedRecord r = I.Voter <$> 
-        r .: "voterID" <*>
-        r .: "district" <*>
-        r .: "preferences"
-
-{--}
-
-{- Definitons of parsing methods for custom data types for Data.CSV -}
-splitOnColumns :: String -> [T.Text]
-splitOnColumns s = T.splitOn (T.pack ":") (T.pack s)
-
-instance FromField I.Preferences where
-    parseField s = 
-        pure (map (read . T.unpack) (splitOnColumns c) :: I.Preferences)
-        where
-            c = BC.unpack s
-{--}
-
-readCSV :: FromNamedRecord a => FilePath -> IO [a]
-readCSV path = do
-  c <- BL.readFile path
-  case decodeByName c of
-    Left err -> error err
-    Right c' -> return $ V.toList $ snd c'
+import VirtualArrow.Input
+import VirtualArrow.Election
 
 
--- main :: IO ()
--- main = do
---     args <- getArgs
---     case args of
---         [dfile, vfile] -> do
---             districts <- readCSV dfile :: IO [I.District]
---             voters <- readCSV vfile :: IO [I.Voter]
---             print (oneDistrictProportionality I.Input{I.districts=districts, I.voters=voters, I.numOfParties=3})
---         _ -> error "Wrong number of arguments."
+import Options.Applicative
+import Data.Maybe (isNothing, fromMaybe)
+import Control.Arrow ((&&&))
+import qualified Data.Map.Strict as Map
+
+
+candidateMap :: [Candidate] -> Map.Map Int Int
+candidateMap list = Map.fromList $ 
+    map (candidateID Control.Arrow.&&& party) list
+
+run :: CL.VirtualArrow -> IO()
+run (CL.VirtualArrow system dfile vfile nparties cfile w s t) = do
+    districts <- Csv.readCSV dfile :: IO [District]
+    voters <- Csv.readCSV vfile :: IO [Voter]
+    let input = Input{ districts=districts
+                     , voters=voters
+                     , nparties=nparties}
+    case system of
+        "borda" -> print (bordaCount input)
+        "one-district" -> print (oneDistrictProportionality input)
+        "plurality" -> print (plurality input)
+        "run-off" -> print (runOffPlurality input)
+        "multi-district" -> print (multiDistrictProportionality input)
+        "mm1" -> 
+            if isNothing w then error "Please specify weight." else
+                print (mixedMember1 input (fromMaybe 0.0 w))
+        "mm2" ->
+            if isNothing s then error "Please specify share." else
+                print (mixedMember2 input (fromMaybe 0.0 s))
+        "threshold" ->
+            if isNothing t then error "Please specify threshold." else
+                print (thresholdProportionality input (fromMaybe 0.0 t))
+        "stv" -> do
+            candidateList <- Csv.readCSV (fromMaybe "" cfile) :: IO [Candidate]
+            print (singleTransferableVote input (candidateMap candidateList))
+        otherwise -> error "Invalid system."
+
+
+main :: IO ()
+main = execParser opts >>= run
+  where
+    opts = info (helper <*> CL.virtualarrow) fullDesc

@@ -3,6 +3,7 @@ module VirtualArrow.Input
     Preferences,
     Parliament,
     DistrictID,
+    Candidate(..),
     District(..),
     Voter(..),
     Input(..),
@@ -32,6 +33,12 @@ type Parliament = [(Int, Int)]
 type DistrictID = Int
 type NumberOfSeats = Int
 type Party = Int
+
+data Candidate = Candidate
+    { candidateID :: Int
+    , party :: Int 
+    }
+    deriving (Show)
 
 data District = District
     { districtID :: !DistrictID
