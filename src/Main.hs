@@ -11,11 +11,19 @@ import Options.Applicative
 import Data.Maybe (isNothing, fromMaybe)
 import Control.Arrow ((&&&))
 import qualified Data.Map.Strict as Map
+import Control.Monad
 
 
 candidateMap :: [Candidate] -> Map.Map Int Int
 candidateMap list = Map.fromList $ 
     map (candidateID Control.Arrow.&&& party) list
+
+
+printParliament :: Parliament -> IO()
+printParliament parliament = do
+    putStrLn "party,number_of_seats"
+    mapM_ (\(p, s)-> putStrLn $ (show p) ++ "," ++ (show s)) parliament
+
 
 run :: CL.VirtualArrow -> IO()
 run (CL.VirtualArrow system dfile vfile nparties cfile w s t) = do
@@ -25,23 +33,23 @@ run (CL.VirtualArrow system dfile vfile nparties cfile w s t) = do
                      , voters=voters
                      , nparties=nparties}
     case system of
-        "borda" -> print (bordaCount input)
-        "one-district" -> print (oneDistrictProportionality input)
-        "plurality" -> print (plurality input)
-        "run-off" -> print (runOffPlurality input)
-        "multi-district" -> print (multiDistrictProportionality input)
+        "borda" -> printParliament (bordaCount input)
+        "one-district" -> printParliament (oneDistrictProportionality input)
+        "plurality" -> printParliament (plurality input)
+        "run-off" -> printParliament (runOffPlurality input)
+        "multi-district" -> printParliament (multiDistrictProportionality input)
         "mm1" -> 
             if isNothing w then error "Please specify weight." else
-                print (mixedMember1 input (fromMaybe 0.0 w))
+                printParliament (mixedMember1 input (fromMaybe 0.0 w))
         "mm2" ->
             if isNothing s then error "Please specify share." else
-                print (mixedMember2 input (fromMaybe 0.0 s))
+                printParliament (mixedMember2 input (fromMaybe 0.0 s))
         "threshold" ->
             if isNothing t then error "Please specify threshold." else
-                print (thresholdProportionality input (fromMaybe 0.0 t))
+                printParliament (thresholdProportionality input (fromMaybe 0.0 t))
         "stv" -> do
             candidateList <- Csv.readCSV (fromMaybe "" cfile) :: IO [Candidate]
-            print (singleTransferableVote input (candidateMap candidateList))
+            printParliament (singleTransferableVote input (candidateMap candidateList))
         otherwise -> error "Invalid system."
 
 
