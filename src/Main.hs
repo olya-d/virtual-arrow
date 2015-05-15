@@ -5,6 +5,7 @@ import qualified Interface.CommandLine as CL
 
 import VirtualArrow.Input
 import VirtualArrow.Election
+import VirtualArrow.Indices
 
 
 import Options.Applicative
@@ -22,38 +23,58 @@ candidateMap list = Map.fromList $
 printParliament :: Parliament -> IO()
 printParliament parliament = do
     putStrLn "party,number_of_seats"
-    mapM_ (\(p, s)-> putStrLn $ (show p) ++ "," ++ (show s)) parliament
+    mapM_ (\(p, s)-> putStrLn $ show p ++ "," ++ show s) parliament
 
 
-run :: CL.VirtualArrow -> IO()
-run (CL.VirtualArrow system dfile vfile nparties cfile w s t) = do
-    districts <- Csv.readCSV dfile :: IO [District]
-    voters <- Csv.readCSV vfile :: IO [Voter]
+runResult :: CL.ResultOptions -> IO()
+runResult opts = do
+    districts <- Csv.readCSV (CL.districtCsv opts) :: IO [District]
+    voters <- Csv.readCSV (CL.votersCsv opts) :: IO [Voter]
     let input = Input{ districts=districts
                      , voters=voters
-                     , nparties=nparties}
-    case system of
+                     , nparties=CL.numberOfParties opts}
+    case CL.system opts of
         "borda" -> printParliament (bordaCount input)
         "one-district" -> printParliament (oneDistrictProportionality input)
         "plurality" -> printParliament (plurality input)
         "run-off" -> printParliament (runOffPlurality input)
         "multi-district" -> printParliament (multiDistrictProportionality input)
         "mm1" -> 
-            if isNothing w then error "Please specify weight." else
-                printParliament (mixedMember1 input (fromMaybe 0.0 w))
+            if isNothing (CL.weight opts) 
+                then error "Please specify weight." 
+                else printParliament $
+                    mixedMember1 input (fromMaybe 0.0 (CL.weight opts))
         "mm2" ->
-            if isNothing s then error "Please specify share." else
-                printParliament (mixedMember2 input (fromMaybe 0.0 s))
+            if isNothing (CL.share opts)
+                then error "Please specify share."
+                else printParliament $
+                    mixedMember2 input (fromMaybe 0.0 (CL.share opts))
         "threshold" ->
-            if isNothing t then error "Please specify threshold." else
-                printParliament (thresholdProportionality input (fromMaybe 0.0 t))
+            if isNothing (CL.threshold opts)
+                then error "Please specify threshold." 
+                else printParliament $
+                    thresholdProportionality 
+                        input 
+                        (fromMaybe 0.0 (CL.threshold opts))
         "stv" -> do
-            candidateList <- Csv.readCSV (fromMaybe "" cfile) :: IO [Candidate]
-            printParliament (singleTransferableVote input (candidateMap candidateList))
+            candidateList <- Csv.readCSV 
+                (fromMaybe "" (CL.candidateListCsv opts)) :: IO [Candidate]
+            printParliament $
+                singleTransferableVote input (candidateMap candidateList)
         otherwise -> error "Invalid system."
 
+runR :: CL.ROptions -> IO()
+runR opts =
+    print $ 
+        representativeness (Csv.readCsv (CL.resultCSV opts)) :: IO [Parliament]
+
+run :: CL.Command -> IO()
+run cmd =
+    case cmd of
+        CL.Result opts -> runResult opts  
+        CL.R opts -> runR opts 
 
 main :: IO ()
 main = execParser opts >>= run
   where
-    opts = info (helper <*> CL.virtualarrow) fullDesc
+    opts = info (helper <*> CL.parser) fullDesc

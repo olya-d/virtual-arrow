@@ -1,14 +1,16 @@
 module Interface.CommandLine
 (
-    VirtualArrow(..),
-    virtualarrow
+    Command(..),
+    ResultOptions(..),
+    ROptions(..),
+    parser
 )
 where
 
 import Options.Applicative
 
 
-data VirtualArrow = VirtualArrow
+data ResultOptions = ResultOptions
     { system :: String
     , districtCsv :: String
     , votersCsv :: String
@@ -19,8 +21,14 @@ data VirtualArrow = VirtualArrow
     , threshold :: Maybe Double
     }
 
-virtualarrow :: Parser VirtualArrow
-virtualarrow = VirtualArrow
+data ROptions = ROptions
+    { resultCSV :: String
+    }
+
+data Command = Result ResultOptions | R ROptions
+
+parseResultOptions :: Parser ResultOptions
+parseResultOptions = ResultOptions
     <$> strOption
         ( long "system"
         <> short 's'
@@ -52,3 +60,21 @@ virtualarrow = VirtualArrow
         ( long "threshold"
         <> short 't'
         <> help "Required in case of threshold."))
+
+
+parseROptions :: Parser ROptions
+parseROptions = ROptions
+    <$> strOption
+        ( long "result_csv"
+        <> short 'r'
+        <> help "Path to the output of the result command."
+        )
+
+parser :: Parser Command
+parser =
+    subparser
+      ( command "result" (info (Result <$> parseResultOptions )
+        ( progDesc "Output the resulting parliament" ))
+      <> command "r" (info (R <$> parseROptions )
+        ( progDesc "Calculate the index of representativeness" ))
+      )

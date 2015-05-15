@@ -30,6 +30,11 @@ instance FromNamedRecord I.Candidate where
         r .: "candidateID" <*>
         r .: "party"
 
+instance FromNamedRecord I.Parliament where
+    parseNamedRecord r = I.Parliament <$> 
+        r .: "party" <*>
+        r .: "number_of_seats"
+
 instance FromField I.Preferences where
     parseField s = 
         pure (V.fromList $ 
