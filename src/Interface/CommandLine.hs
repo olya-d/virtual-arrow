@@ -23,6 +23,9 @@ data ResultOptions = ResultOptions
 
 data ROptions = ROptions
     { resultCSV :: String
+    , rDistrictCsv :: String
+    , rVotersCsv :: String
+    , rNumberOfParties :: Int
     }
 
 data Command = Result ResultOptions | R ROptions
@@ -67,8 +70,18 @@ parseROptions = ROptions
     <$> strOption
         ( long "result_csv"
         <> short 'r'
-        <> help "Path to the output of the result command."
-        )
+        <> help "Path to the output of the result command.")
+    <*> strOption
+        ( long "districts_csv"
+        <> short 'd'
+        <> help "File should contain header districtID,nseats" )
+    <*> strOption
+        ( long "voters_csv"
+        <> short 'v'
+        <> help "File should contain header voterID,district,preferences")
+    <*> option auto
+        ( long "number_of_parties"
+        <> short 'p')
 
 parser :: Parser Command
 parser =

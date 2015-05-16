@@ -26,7 +26,7 @@ printParliament parliament = do
 
 main :: IO ()
 main = do
-    districts <- Csv.readDistricts "uk/constituencies.csv" :: IO [District]
+    districts <- Csv.readCSV "uk/constituencies.csv" :: IO [District]
     voters <- Csv.readCSV "uk/voters.csv" :: IO [Voter]
     let input = Input{ districts=districts
                      , voters=voters

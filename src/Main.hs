@@ -26,13 +26,20 @@ printParliament parliament = do
     mapM_ (\(p, s)-> putStrLn $ show p ++ "," ++ show s) parliament
 
 
+readInput :: String -> String -> Int -> IO Input
+readInput dfile vfile nparties = do
+    districts <- Csv.readCSV dfile :: IO [District]
+    voters <- Csv.readCSV vfile :: IO [Voter]
+    return Input{ districts=districts
+         , voters=voters
+         , nparties=nparties}
+
 runResult :: CL.ResultOptions -> IO()
 runResult opts = do
-    districts <- Csv.readCSV (CL.districtCsv opts) :: IO [District]
-    voters <- Csv.readCSV (CL.votersCsv opts) :: IO [Voter]
-    let input = Input{ districts=districts
-                     , voters=voters
-                     , nparties=CL.numberOfParties opts}
+    input <- readInput 
+        (CL.districtCsv opts)
+        (CL.votersCsv opts)
+        (CL.numberOfParties opts)
     case CL.system opts of
         "borda" -> printParliament (bordaCount input)
         "one-district" -> printParliament (oneDistrictProportionality input)
@@ -64,9 +71,14 @@ runResult opts = do
         otherwise -> error "Invalid system."
 
 runR :: CL.ROptions -> IO()
-runR opts =
-    print $ 
-        representativeness (Csv.readCsv (CL.resultCSV opts)) :: IO [Parliament]
+runR opts = do
+    input <- readInput 
+        (CL.rDistrictCsv opts) 
+        (CL.rVotersCsv opts) 
+        (CL.rNumberOfParties opts)
+    parliament <- Csv.readParliamentFromCSV (CL.resultCSV opts) :: IO Parliament
+    print $ representativeness input parliament
+            
 
 run :: CL.Command -> IO()
 run cmd =

@@ -1,9 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
 
 module Interface.ReadCsv
 (
-    readCSV
+    readCSV,
+    readParliamentFromCSV
 ) where
 
 import qualified VirtualArrow.Input as I
@@ -30,11 +31,6 @@ instance FromNamedRecord I.Candidate where
         r .: "candidateID" <*>
         r .: "party"
 
-instance FromNamedRecord I.Parliament where
-    parseNamedRecord r = I.Parliament <$> 
-        r .: "party" <*>
-        r .: "number_of_seats"
-
 instance FromField I.Preferences where
     parseField s = 
         pure (V.fromList $ 
@@ -51,3 +47,11 @@ readCSV path = do
   case decodeByName c of
     Left err -> error err
     Right c' -> return $ V.toList $ snd c'
+
+readParliamentFromCSV :: FilePath -> IO [(Int, Int)]
+readParliamentFromCSV path = do
+    c <- BL.readFile path
+    case decode HasHeader c of
+        Left err -> error err
+        Right v  -> return $ V.toList $ V.map (\(party :: Int, seats :: Int) ->
+                    (party, seats)) v
