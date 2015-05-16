@@ -19,6 +19,7 @@ module VirtualArrow.Factory (
 
 import VirtualArrow.Input
 import qualified Data.Vector as V
+import qualified Data.Map.Strict as Map
 
 
 districtsFactory :: [District]
@@ -35,21 +36,27 @@ districtsFactory2 =
 
 votersFactory :: [Voter]
 votersFactory =
-    [ Voter{voterID=1, district=1, preferences=V.fromList [0,1,2]}
-    , Voter{voterID=2, district=1, preferences=V.fromList [1,2,0]}
-    , Voter{voterID=3, district=1, preferences=V.fromList [0,2,1]}
-    , Voter{voterID=4, district=1, preferences=V.fromList [0,1,2]}
-    , Voter{voterID=5, district=1, preferences=V.fromList [1,0,2]}
-    , Voter{voterID=6, district=2, preferences=V.fromList [1,0,2]}
-    , Voter{voterID=7, district=2, preferences=V.fromList [1,0,2]}
-    , Voter{voterID=8, district=2, preferences=V.fromList [1,2,0]}
+    [ Voter{district=1, preferences=V.fromList [0,1,2]}
+    , Voter{district=1, preferences=V.fromList [1,2,0]}
+    , Voter{district=1, preferences=V.fromList [0,2,1]}
+    , Voter{district=1, preferences=V.fromList [0,1,2]}
+    , Voter{district=1, preferences=V.fromList [1,0,2]}
+    , Voter{district=2, preferences=V.fromList [1,0,2]}
+    , Voter{district=2, preferences=V.fromList [1,0,2]}
+    , Voter{district=2, preferences=V.fromList [1,2,0]}
     ]
 
 input :: Input
-input = Input{districts=districtsFactory, voters=votersFactory, nparties=3}
+input = Input{ districts=districtsFactory
+             , voters=votersFactory
+             , nparties=3
+             , districtMap=Map.fromList $ votersByDistrict votersFactory}
 
 input2 :: Input
-input2 = Input{districts=districtsFactory2, voters=votersFactory, nparties=3}
+input2 = Input{ districts=districtsFactory2
+              , voters=votersFactory
+              , nparties=3
+              , districtMap=Map.fromList $ votersByDistrict votersFactory}
 
 oneDistrictProportionalityResult :: Parliament
 oneDistrictProportionalityResult = [(0, 2), (1, 4)]

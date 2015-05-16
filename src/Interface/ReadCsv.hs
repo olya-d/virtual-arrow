@@ -4,7 +4,8 @@
 module Interface.ReadCsv
 (
     readCSV,
-    readVotersCsv
+    readVotersFromCsv,
+    readParliamentFromCSV
 ) where
 
 import qualified VirtualArrow.Input as I
@@ -46,6 +47,11 @@ instance FromField I.Preferences where
         pure $ V.fromList $
             map (fst . fromMaybe (0, "") . BC.readInt) (BC.split ':' s)
 
+instance FromNamedRecord I.Candidate where
+    parseNamedRecord r = I.Candidate <$> 
+        r .: "candidateID" <*>
+        r .: "party"
+
 readCSV :: FromNamedRecord a => FilePath -> IO [a]
 readCSV path = do
   c <- BL.readFile path
@@ -53,8 +59,8 @@ readCSV path = do
     Left err -> error err
     Right (_, c') -> return $ F.toList c'
 
-readVotersCsv :: FilePath -> IO [I.Voter]
-readVotersCsv path = do
+readVotersFromCsv :: FilePath -> IO [I.Voter]
+readVotersFromCsv path = do
     collections <- readCSV path :: IO [VoterCollection]
     return (generateVoters collections)
 

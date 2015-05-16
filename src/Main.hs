@@ -7,17 +7,10 @@ import VirtualArrow.Input
 import VirtualArrow.Election
 import VirtualArrow.Indices
 
-
 import Options.Applicative
 import Data.Maybe (isNothing, fromMaybe)
-import Control.Arrow ((&&&))
 import qualified Data.Map.Strict as Map
 import Control.Monad
-
-
-candidateMap :: [Candidate] -> Map.Map Int Int
-candidateMap list = Map.fromList $ 
-    map (candidateID Control.Arrow.&&& party) list
 
 
 printParliament :: Parliament -> IO()
@@ -25,14 +18,14 @@ printParliament parliament = do
     putStrLn "party,number_of_seats"
     mapM_ (\(p, s)-> putStrLn $ show p ++ "," ++ show s) parliament
 
-
 readInput :: String -> String -> Int -> IO Input
 readInput dfile vfile nparties = do
     districts <- Csv.readCSV dfile :: IO [District]
-    voters <- Csv.readCSV vfile :: IO [Voter]
+    voters <- Csv.readVotersFromCsv vfile
     return Input{ districts=districts
-         , voters=voters
-         , nparties=nparties}
+                , voters=voters
+                , nparties=nparties
+                , districtMap=Map.fromList $ votersByDistrict voters}
 
 runResult :: CL.ResultOptions -> IO()
 runResult opts = do

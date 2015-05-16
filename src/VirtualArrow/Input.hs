@@ -9,8 +9,6 @@ module VirtualArrow.Input
     Input(..),
     Party,
     NumberOfSeats,
-    votersByDistrictID,
-    votersByDistrict,
     parliamentSize,
     numberOfSeatsByDistrictID,
     numberOfSeatsByDistrict,
@@ -18,13 +16,18 @@ module VirtualArrow.Input
     firstChoices,
     firstChoicesAmongVoters,
     calculateProportion,
-    prefToPlaces
+    prefToPlaces,
+    votersByDistrict,
+    candidateMap
 ) where
 
 import qualified Data.Vector as V
 import qualified Data.Map.Strict as Map
 import Data.Maybe (fromMaybe)
 import VirtualArrow.Utils ((/.))
+import Data.List (groupBy)
+import Data.Function (on)
+import Control.Arrow ((&&&))
 
 
 -- List of parties ordered by voter's preference
@@ -80,15 +83,6 @@ prefToPlaces pref =
 districtIDs :: Input -> [DistrictID]
 districtIDs input = map districtID (districts input)
 
--- | Returns list of voters by district id.
-votersByDistrictID :: Input -> DistrictID -> [Voter]
-votersByDistrictID input dId = filter ((== dId) . district) (voters input)
-
--- | Returns list of pairs (district id, voters in the district).
-votersByDistrict :: Input -> [(DistrictID, [Voter])]
-votersByDistrict input =
-    [(i, votersByDistrictID input i) | i <- districtIDs input]
-
 -- | Returns number of seats by district id.
 numberOfSeatsByDistrictID :: Input -> DistrictID -> NumberOfSeats
 numberOfSeatsByDistrictID input dID =
@@ -121,3 +115,13 @@ nvoters input = length (voters input)
 calculateProportion :: Input -> Int -> Int
 calculateProportion input x =
     round ((x * parliamentSize input) /. nvoters input)
+
+-- | Returns pairs (district id, voters in that district)
+votersByDistrict :: [Voter] -> [(DistrictID, [Voter])]
+votersByDistrict voters =
+    map (\g -> (district (head g), g)) (groupBy ((==) `on` district) voters)
+
+-- | Returns map from candidate id (Party) to party.
+candidateMap :: [Candidate] -> Map.Map Int Int
+candidateMap list = Map.fromList $ 
+    map (candidateID Control.Arrow.&&& party) list

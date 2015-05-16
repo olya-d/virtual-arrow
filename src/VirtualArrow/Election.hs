@@ -57,7 +57,7 @@ bordaCount input =
     sumSeatsAcrossDistricts $
         map
             (I.numberOfSeatsByDistrictID input *** bordaWinner)
-            (I.votersByDistrict input) -- [(I.DistrictID, [I.Voter])]
+            (Map.toList $ I.districtMap input) -- [(I.DistrictID, [I.Voter])]
 
 {--------------------------------------------------------------------
   One-district Proportionality
@@ -104,7 +104,7 @@ runOffPlurality input =
     sumSeatsAcrossDistricts $
         map
             (I.numberOfSeatsByDistrictID input *** winner)
-            (I.votersByDistrict input)
+            (Map.toList $ I.districtMap input)
   where
     winner :: [I.Voter] -> I.Party
     winner voters =
@@ -158,7 +158,7 @@ multiDistrictProportionality :: I.Input -> I.Parliament
 multiDistrictProportionality input =
     sumSeatsAcrossDistricts $
         -- concatMap is used, since district does not have a single winner
-        concatMap sainteLague (I.votersByDistrict input)
+        concatMap sainteLague (Map.toList $ I.districtMap input)
   where
     sainteLague :: (I.DistrictID, [I.Voter]) -> [PartyResult]
     sainteLague (districtID, voters) =
@@ -211,6 +211,7 @@ mixedMember2 input share =
             { I.districts=pluralityDistricts
             , I.voters=I.voters input
             , I.nparties=I.nparties input
+            , I.districtMap=Map.fromList $ I.votersByDistrict (I.voters input)
             }
         ) 
         (multiDistrictProportionality
@@ -218,6 +219,7 @@ mixedMember2 input share =
             { I.districts=proportionalityDistricts
             , I.voters=I.voters input
             , I.nparties=I.nparties input
+            , I.districtMap=Map.fromList $ I.votersByDistrict (I.voters input)
             }
         )
     where
@@ -365,7 +367,7 @@ singleTransferableVote input candidates'Party =
         stv (table voters) [] (I.nseats district) (I.nparties input)
       where
         voters :: [I.Voter]
-        voters = I.votersByDistrictID input (I.districtID district)
+        voters = (I.districtMap input) Map.! (I.districtID district)
     table :: [I.Voter] -> M.Matrix Double
     table vs = M.transpose $ M.fromLists (map oneVoterBallot vs)
     oneVoterBallot :: I.Voter -> [Double]
