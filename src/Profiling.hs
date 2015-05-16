@@ -18,7 +18,7 @@ import Data.Function (on)
 
 
 candidateMap :: [Candidate] -> Map.Map Int Int
-candidateMap list = Map.fromList $ 
+candidateMap list = Map.fromList $
     map (candidateID Control.Arrow.&&& party) list
 
 
@@ -39,7 +39,7 @@ votersByDistrict voters =
 main :: IO ()
 main = do
     districts <- Csv.readCSV "uk/constituencies.csv" :: IO [District]
-    voters <- Csv.readCSV "uk/voters.csv"
+    voters <- Csv.readVotersCsv "uk/voters.csv"
     let input = Input{ districts=districts
                      , voters=voters
                      , nparties=5

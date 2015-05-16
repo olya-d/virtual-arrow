@@ -100,7 +100,7 @@ rows = []
 with open('2015.csv') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-        if row['Country'] == 'England' and len(rows) < 100:
+        if row['Country'] == 'England' and len(rows) < 1000:
             rows.append(row)
 
 voters = []
@@ -126,10 +126,11 @@ for constituency, results in itertools.groupby(rows, lambda x: x['Constituency']
         if result['Party'] not in considered_parties:
             electorate_size -= get_int(result['Votes'])
         else:
-            voters += [{
+            voters.append({
                 'district': len(constituencies) - 1,
-                'preferences': generate_preferences(result['Party'])}
-            ]*get_int(result['Votes'])
+                'preferences': generate_preferences(result['Party']),
+                'size': get_int(result['Votes'])
+            })
 
 for d in districts:
     d['nseats'] = d['nseats'] * seats // total_population
@@ -147,9 +148,7 @@ with open('districts.csv', 'w') as csvfile:
     writer.writerows(districts)
 
 with open('voters.csv', 'w') as csvfile:
-    fieldnames = ['voterID', 'district', 'preferences']
+    fieldnames = ['size', 'district', 'preferences']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
-    for i, v in enumerate(voters):
-        v['voterID'] = i
-        writer.writerow(v)
+    writer.writerows(voters)

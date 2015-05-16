@@ -38,7 +38,7 @@ type Parliament = [(Party, NumberOfSeats)]
 
 data Candidate = Candidate
     { candidateID :: !Int
-    , party :: !Int 
+    , party :: !Int
     }
     deriving (Show)
 
@@ -49,13 +49,12 @@ data District = District
     deriving (Show)
 
 data Voter = Voter
-    { voterID :: !Int
-    , district :: !DistrictID
+    { district :: !DistrictID
     , preferences :: !Preferences
     }
     deriving (Show)
 
-data Input = Input 
+data Input = Input
     { districts :: ![District]
     , voters :: ![Voter]
     , nparties :: !Int
@@ -70,7 +69,7 @@ prefToPlaces :: Preferences -> V.Vector Int
 prefToPlaces pref =
     V.map index (V.fromList [0..p - 1])
   where
-    p = length pref 
+    p = length pref
     index :: Int -> Int
     index x =
         fromMaybe
@@ -92,15 +91,15 @@ votersByDistrict input =
 
 -- | Returns number of seats by district id.
 numberOfSeatsByDistrictID :: Input -> DistrictID -> NumberOfSeats
-numberOfSeatsByDistrictID input dID = 
+numberOfSeatsByDistrictID input dID =
     nseats (head $ filter (\x -> districtID x == dID) (districts input))
 
 -- | Returns list of pairs (district id, number of seats in the district).
 numberOfSeatsByDistrict :: Input -> [(DistrictID, NumberOfSeats)]
-numberOfSeatsByDistrict input = 
+numberOfSeatsByDistrict input =
     [(i, numberOfSeatsByDistrictID input i) | i <- districtIDs input]
 
--- | Returns list of first choices (first preference) 
+-- | Returns list of first choices (first preference)
 -- | for each voter in the input.
 firstChoices :: Input -> [Party]
 firstChoices input = map (V.head . preferences) (voters input)
@@ -118,7 +117,7 @@ parliamentSize input = sum (map nseats (districts input))
 nvoters :: Input -> Int
 nvoters input = length (voters input)
 
--- | Returns proportion of parliament corresponding to x (number of votes). 
+-- | Returns proportion of parliament corresponding to x (number of votes).
 calculateProportion :: Input -> Int -> Int
 calculateProportion input x =
     round ((x * parliamentSize input) /. nvoters input)
