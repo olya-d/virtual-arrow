@@ -81,7 +81,7 @@ plurality input =
     sumSeatsAcrossDistricts $
         map 
             (I.numberOfSeatsByDistrictID input *** winner)
-            (I.votersByDistrict input)
+            (Map.toList $ I.districtMap input)
   where
     winner :: [I.Voter] -> I.Party
     winner voters =

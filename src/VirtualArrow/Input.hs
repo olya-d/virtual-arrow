@@ -22,6 +22,7 @@ module VirtualArrow.Input
 ) where
 
 import qualified Data.Vector as V
+import qualified Data.Map.Strict as Map
 import Data.Maybe (fromMaybe)
 import VirtualArrow.Utils ((/.))
 
@@ -36,8 +37,8 @@ type Party = Int
 type Parliament = [(Party, NumberOfSeats)]
 
 data Candidate = Candidate
-    { candidateID :: Int
-    , party :: Int 
+    { candidateID :: !Int
+    , party :: !Int 
     }
     deriving (Show)
 
@@ -50,14 +51,15 @@ data District = District
 data Voter = Voter
     { voterID :: !Int
     , district :: !DistrictID
-    , preferences :: Preferences
+    , preferences :: !Preferences
     }
     deriving (Show)
 
 data Input = Input 
-    { districts :: [District]
-    , voters :: [Voter]
+    { districts :: ![District]
+    , voters :: ![Voter]
     , nparties :: !Int
+    , districtMap :: Map.Map DistrictID [Voter]
     }
     deriving (Show)
 

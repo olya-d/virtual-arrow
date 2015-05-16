@@ -4,7 +4,9 @@
 module Interface.ReadCsv
 (
     readCSV,
-    readParliamentFromCSV
+    -- readParliamentFromCSV,
+    -- readDistrictsFromCSV,
+    -- readVotersFromCSV
 ) where
 
 import qualified VirtualArrow.Input as I
@@ -13,7 +15,9 @@ import qualified Data.Text as T
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Char8 as BC
 import Data.Csv
+import qualified Data.Csv.Streaming as Streaming
 import Data.Maybe (fromMaybe)
+import qualified Data.Foldable as F
 
 
 instance FromNamedRecord I.District where
@@ -37,13 +41,12 @@ instance FromField I.Preferences where
         pure $ V.fromList $
             map (fst . fromMaybe (0, "") . BC.readInt) (BC.split ':' s)
 
-
 readCSV :: FromNamedRecord a => FilePath -> IO [a]
 readCSV path = do
   c <- BL.readFile path
-  case decodeByName c of
+  case Streaming.decodeByName c of
     Left err -> error err
-    Right c' -> return $ V.toList $ snd c'
+    Right (_, c') -> return $ F.toList c'
 
 readParliamentFromCSV :: FilePath -> IO [(Int, Int)]
 readParliamentFromCSV path = do
