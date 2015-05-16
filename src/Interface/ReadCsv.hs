@@ -13,6 +13,7 @@ import qualified Data.Text as T
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Char8 as BC
 import Data.Csv
+import Data.Maybe (fromMaybe)
 
 
 instance FromNamedRecord I.District where
@@ -33,12 +34,8 @@ instance FromNamedRecord I.Candidate where
 
 instance FromField I.Preferences where
     parseField s = 
-        pure (V.fromList $ 
-            map (read . T.unpack) (splitOnColumns c) :: I.Preferences)
-      where
-        c = BC.unpack s
-        splitOnColumns :: String -> [T.Text]
-        splitOnColumns s = T.splitOn (T.pack ":") (T.pack s)
+        pure $ V.fromList $
+            map (fst . fromMaybe (0, "") . BC.readInt) (BC.split ':' s)
 
 
 readCSV :: FromNamedRecord a => FilePath -> IO [a]
