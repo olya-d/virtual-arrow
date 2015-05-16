@@ -29,7 +29,7 @@ sumSeatsAcrossDistricts results =
         (\g -> (snd (head g), sum (map fst g))) 
         (groupBy 
             ((==) `on` snd) 
-            results
+            (sortBy (compare `on` snd) results)
         )
 
 {--------------------------------------------------------------------
