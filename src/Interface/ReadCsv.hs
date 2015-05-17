@@ -14,7 +14,8 @@ module Interface.ReadCsv
 (
     readCSV,
     readVotersFromCsv,
-    readParliamentFromCSV
+    readParliamentFromCSV,
+    readCoalitionsFromCSV
 ) where
 
 import qualified VirtualArrow.Input as I
@@ -73,10 +74,18 @@ readVotersFromCsv path = do
     collections <- readCSV path :: IO [VoterCollection]
     return (generateVoters collections)
 
-readParliamentFromCSV :: FilePath -> IO [(Int, Int)]
+readParliamentFromCSV :: FilePath -> IO [(I.Party, I.NumberOfSeats)]
 readParliamentFromCSV path = do
     c <- BL.readFile path
     case decode HasHeader c of
         Left err -> error err
         Right v  -> return $ V.toList $
             V.map (\(party :: Int, seats :: Int) -> (party, seats)) v
+
+readCoalitionsFromCSV :: FilePath -> IO [(I.Party, Int)]
+readCoalitionsFromCSV path = do
+    c <- BL.readFile path
+    case decode HasHeader c of
+        Left err -> error err
+        Right v  -> return $ V.toList $
+            V.map (\(party :: Int, coalition :: Int) -> (party, coalition)) v

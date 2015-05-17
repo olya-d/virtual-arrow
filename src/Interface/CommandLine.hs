@@ -12,6 +12,7 @@ module Interface.CommandLine
     Command(..),
     ResultOptions(..),
     GallagherOptions(..),
+    GovernabilityOptions(..),
     parser
 )
 where
@@ -31,14 +32,22 @@ data ResultOptions = ResultOptions
     }
 
 data GallagherOptions = GallagherOptions
-    { resultCSV :: String
+    { rResultCSV :: String
     , rDistrictCsv :: String
     , rVotersCsv :: String
     , rNumberOfParties :: Int
     , rCandidateListCsv :: Maybe String 
     }
 
-data Command = Result ResultOptions | Gallagher GallagherOptions
+data GovernabilityOptions = GovernabilityOptions
+    { gResultCSV :: String
+    , gCoalitionCsv :: String 
+    }
+
+data Command = 
+      Result ResultOptions 
+    | Gallagher GallagherOptions 
+    | Governability GovernabilityOptions
 
 parseResultOptions :: Parser ResultOptions
 parseResultOptions = ResultOptions
@@ -97,12 +106,25 @@ parseGallagherOptions = GallagherOptions
         <> short 'c'
         <> help "Required in case of stv. File should contain header candidateID,party"))
 
+parseGovernabilityOptions :: Parser GovernabilityOptions
+parseGovernabilityOptions = GovernabilityOptions
+    <$> strOption
+        ( long "result_csv"
+        <> short 'r'
+        <> help "Path to the output of the result command.")
+    <*> strOption
+        ( long "coalition_csv"
+        <> short 'c'
+        <> help "File should contain header partyID,coalitionID")
+
 -- | Parses the call of virtual-arrow from the command-line.
 parser :: Parser Command
 parser =
     subparser
-      ( command "result" (info (Result <$> parseResultOptions )
+      ( command "result" (info (Result <$> parseResultOptions)
         ( progDesc "Output the resulting parliament." ))
-      <> command "gallagher" (info (Gallagher <$> parseGallagherOptions )
+      <> command "gallagher" (info (Gallagher <$> parseGallagherOptions)
         ( progDesc "Calculate the index of representativeness according to Gallagher." ))
+      <> command "governability" (info (Governability <$> parseGovernabilityOptions)
+        ( progDesc "Calculate the index of governability." ))
       )

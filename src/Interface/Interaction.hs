@@ -9,9 +9,7 @@ module Interface.Interaction
 (
     printParliament,
     readInput,
-    run,
-    runResultCommand,
-    runRCommand
+    run
 )
 where
 
@@ -84,15 +82,15 @@ runResultCommand opts = do
                 singleTransferableVote input (candidateMap candidateList)
         _ -> error "Invalid system."
 
--- | Parses command-line arguments passed to @r@ command and outputs the
+-- | Parses command-line arguments passed to @gallagher@ command and outputs the
 -- index of representativeness. Used by 'run'.
-runRCommand :: CL.GallagherOptions -> IO()
-runRCommand opts = do
+runGallagherCommand :: CL.GallagherOptions -> IO()
+runGallagherCommand opts = do
     input <- readInput 
         (CL.rDistrictCsv opts) 
         (CL.rVotersCsv opts) 
         (CL.rNumberOfParties opts)
-    parliament <- Csv.readParliamentFromCSV (CL.resultCSV opts) :: IO Parliament
+    parliament <- Csv.readParliamentFromCSV (CL.rResultCSV opts) :: IO Parliament
     case CL.rCandidateListCsv opts of
         Just ccsv -> do
             candidates <- Csv.readCSV ccsv :: IO [Candidate]
@@ -100,10 +98,19 @@ runRCommand opts = do
         Nothing ->
             print $ gallagherIndex input parliament Nothing
 
+-- | Parses command-line arguments passed to @governability@ command and outputs 
+-- the index of governability. Used by 'run'.
+runGovernabilityCommand :: CL.GovernabilityOptions -> IO()
+runGovernabilityCommand opts = do
+    coalitions <- Csv.readCoalitionsFromCSV (CL.gCoalitionCsv opts)
+    parliament <- Csv.readParliamentFromCSV (CL.gResultCSV opts)
+    print $ governability parliament coalitions
+
 -- | Read command-line arguments and starts processing of the supplied command.
 -- Used by "Main" in the main function.
 run :: CL.Command -> IO()
 run cmd =
     case cmd of
         CL.Result opts -> runResultCommand opts  
-        CL.Gallagher opts -> runRCommand opts 
+        CL.Gallagher opts -> runGallagherCommand opts 
+        CL.Governability opts -> runGovernabilityCommand opts

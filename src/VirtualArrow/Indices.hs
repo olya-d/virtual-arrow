@@ -17,7 +17,6 @@ import Control.Arrow
 import Data.List (groupBy, sortBy)
 import Data.Function (on)
 
-import Debug.Trace
 
 -- | Computes <http://en.wikipedia.org/wiki/Gallagher_Index Gallagher Index>
 gallagherIndex :: Input -> Parliament -> Maybe (Map.Map Int Party)-> Double
