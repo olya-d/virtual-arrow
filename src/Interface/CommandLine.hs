@@ -11,7 +11,7 @@ module Interface.CommandLine
 (
     Command(..),
     ResultOptions(..),
-    ROptions(..),
+    GallagherOptions(..),
     parser
 )
 where
@@ -30,14 +30,14 @@ data ResultOptions = ResultOptions
     , threshold :: Maybe Double
     }
 
-data ROptions = ROptions
+data GallagherOptions = GallagherOptions
     { resultCSV :: String
     , rDistrictCsv :: String
     , rVotersCsv :: String
     , rNumberOfParties :: Int
     }
 
-data Command = Result ResultOptions | R ROptions
+data Command = Result ResultOptions | Gallagher GallagherOptions
 
 parseResultOptions :: Parser ResultOptions
 parseResultOptions = ResultOptions
@@ -74,8 +74,8 @@ parseResultOptions = ResultOptions
         <> help "Required in case of threshold."))
 
 
-parseROptions :: Parser ROptions
-parseROptions = ROptions
+parseGallagherOptions :: Parser GallagherOptions
+parseGallagherOptions = GallagherOptions
     <$> strOption
         ( long "result_csv"
         <> short 'r'
@@ -97,7 +97,7 @@ parser :: Parser Command
 parser =
     subparser
       ( command "result" (info (Result <$> parseResultOptions )
-        ( progDesc "Output the resulting parliament" ))
-      <> command "r" (info (R <$> parseROptions )
-        ( progDesc "Calculate the index of representativeness" ))
+        ( progDesc "Output the resulting parliament." ))
+      <> command "gallagher" (info (Gallagher <$> parseGallagherOptions )
+        ( progDesc "Calculate the index of representativeness according to Gallagher." ))
       )

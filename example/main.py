@@ -92,7 +92,7 @@ for constituency, results in itertools.groupby(rows, lambda x: x['Constituency']
         'nseats': 1
     })
     districts.append({
-        'districtID': len(constituencies),
+        'districtID': len(constituencies) - 1,
         'nseats': electorate_size
     })
     seats += 1
@@ -110,7 +110,7 @@ for constituency, results in itertools.groupby(rows, lambda x: x['Constituency']
             })
 
 for d in districts:
-    d['nseats'] = d['nseats'] * seats // total_population
+    d['nseats'] = d['nseats'] * seats // total_population + 1
 
 with open('constituencies.csv', 'w') as csvfile:
     fieldnames = ['districtID', 'nseats']

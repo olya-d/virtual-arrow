@@ -5,7 +5,7 @@ Description: Definitions of indices of proportionality and governability.
 
 module VirtualArrow.Indices
 (
-    representativeness,
+    gallagherIndex,
 )
 where
 
@@ -15,8 +15,8 @@ import VirtualArrow.Election (oneDistrictProportionality)
 
 
 -- | Calculates <http://en.wikipedia.org/wiki/Gallagher_Index Gallagher Index>
-representativeness :: Input -> Parliament -> Double
-representativeness input parliament =
+gallagherIndex :: Input -> Parliament -> Double
+gallagherIndex input parliament =
     sqrt (1.0/2.0 * fromIntegral s) / 
     fromIntegral (parliamentSize input) * 100.0
   where

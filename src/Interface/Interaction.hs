@@ -86,14 +86,14 @@ runResultCommand opts = do
 
 -- | Parses command-line arguments passed to @r@ command and outputs the
 -- index of representativeness. Used by 'run'.
-runRCommand :: CL.ROptions -> IO()
+runRCommand :: CL.GallagherOptions -> IO()
 runRCommand opts = do
     input <- readInput 
         (CL.rDistrictCsv opts) 
         (CL.rVotersCsv opts) 
         (CL.rNumberOfParties opts)
     parliament <- Csv.readParliamentFromCSV (CL.resultCSV opts) :: IO Parliament
-    print $ representativeness input parliament
+    print $ gallagherIndex input parliament
             
 -- | Read command-line arguments and starts processing of the supplied command.
 -- Used by "Main" in the main function.
@@ -101,4 +101,4 @@ run :: CL.Command -> IO()
 run cmd =
     case cmd of
         CL.Result opts -> runResultCommand opts  
-        CL.R opts -> runRCommand opts 
+        CL.Gallagher opts -> runRCommand opts 
