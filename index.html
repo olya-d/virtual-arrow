@@ -67,11 +67,19 @@
 <span class="mi">2</span><span class="p">,</span><span class="mi">1</span>
 </pre></div>
 <p>Single Transferable Vote asks voters to rank candidates, not parties, but each candidate belongs to one. So it is required to know the relationship between candidates and their parties. If we look at the <em>voters.csv</em> and <em>candidates.csv</em>, they say that voters from the first group prefer the most candidate number 1 from the party number 2.</p>
+<p>To compute the index of governability it is necessary to know coalitions, which should be provided in the following format:</p>
+<p><em>coalitions.csv</em></p>
+<div class="highlight"><pre><span class="n">party</span><span class="p">,</span><span class="n">coalition</span>
+<span class="mi">0</span><span class="p">,</span><span class="mi">1</span>
+<span class="mi">1</span><span class="p">,</span><span class="mi">0</span>
+<span class="mi">2</span><span class="p">,</span><span class="mi">1</span>
+</pre></div>
+<p>In this example parties number 0 and 2 belong to one coalition.</p>
 </div>
 <div class="section" id="example-of-usage">
 <h2>Example of usage</h2>
-<p>The program is supplied with one (somewhat <a class="footnote-reference" href="#id3" id="id1">[1]</a>) real-world example: the 2015 election in the United Kingdom parliament.</p>
-<p>The sciprt <cite>main.py</cite> generates <cite>voters.csv</cite> <a class="footnote-reference" href="#id4" id="id2">[2]</a> and <cite>constituencies.csv</cite>. To see the result of election if one-district proportionality is used (instead of current 'First-past-the-post' system, in our case called 'Plurality'), the program should be started from the command line:</p>
+<p>The program is supplied with one (somewhat <a class="footnote-reference" href="#id4" id="id1">[1]</a>) real-world example: the 2015 election in the United Kingdom parliament.</p>
+<p>The sciprt <cite>main.py</cite> generates <cite>voters.csv</cite> <a class="footnote-reference" href="#id5" id="id2">[2]</a> and <cite>constituencies.csv</cite>. To see the result of election if one-district proportionality is used (instead of current 'First-past-the-post' system, in our case called 'Plurality'), the program should be started from the command line:</p>
 <div class="highlight"><pre>.virtual-arrow result --system one-district -d example/constituencies.csv -v example/voters.csv -p 5
 </pre></div>
 <p>Here we provide the name of the system (<cite>one-district</cite>), path to CSV with districts (<cite>example/constituencies.csv</cite>), path to CSV with voters (<cite>example/voters.csv</cite>) and the number of parties (<cite>5</cite>).</p>
@@ -101,21 +109,27 @@
 <div class="highlight"><pre><span class="nv">$ </span>./virtual-arrow gallagher -r borda.csv -d example/constituencies.csv -v example/voters.csv -p 5
 &gt; 14.771806468611409
 </pre></div>
-<p>We see that representaviness increases in case of the <cite>Borda Count</cite>, the result that can be further improved in case of <cite>Run-off plurality</cite>:</p>
+<p>We see that representaviness increases in case of the <cite>Borda count</cite>, the result that can be further improved in case of <cite>run-off plurality</cite>:</p>
 <div class="highlight"><pre><span class="nv">$ </span>./virtual-arrow gallagher -r run-off.csv -d example/constituencies.csv -v example/voters.csv -p 5
 &gt; 11.541130581035421
 </pre></div>
+<p>Increase in the representaviness can lead to more fragmented parliament. Under <cite>plurality</cite> the Conservative party has a clear majorty, and under <cite>run-off plurality</cite> it has to govern in coaltion with the Liberal Democrat Party <a class="footnote-reference" href="#id6" id="id3">[3]</a>. Hence, the governability index decreases:</p>
+<div class="highlight"><pre><span class="nv">$ </span>./virtual-arrow governability -r plurality.csv -c coalitions.csv
+&gt; 0.6097560975609756
+<span class="nv">$ </span>./virtual-arrow governability -r run-off.csv -c coalitions.csv
+&gt; 0.3430268918073796
+</pre></div>
 <p>To see the complete description of available commands and their arguments, run:</p>
 <div class="highlight"><pre><span class="nv">$ </span>./virtual-arrow --help
-<span class="nv">$ </span>./virtual-arrow result --help
+<span class="nv">$ </span>./virtual-arrow result
 </pre></div>
-<table class="docutils footnote" frame="void" id="id3" rules="none">
+<table class="docutils footnote" frame="void" id="id4" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>In the UK example only constituencies located in England are taken into account as I do not have enough data to predict the second and further orders of preferences for voters in Scotland, Wales and Nothern Ireland. Thus regional parties, such as Scottish National Party, Democratic Unionist Party, Sinn Fein and so on, are not considered.</td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id4" rules="none">
+<table class="docutils footnote" frame="void" id="id5" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>As can be seen from <cite>main.py</cite>, parties are given the following identifiers:</td></tr>
@@ -127,6 +141,12 @@
 <span class="s1">&#39;Liberal Democrat&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
 <span class="s1">&#39;Green Party&#39;</span><span class="p">:</span> <span class="mi">4</span>
 </pre></div>
+<table class="docutils footnote" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[3]</a></td><td>Assumption is made (based on public announcements) that the Conservative party is in a coalition with the Liberal Democrat Party and the Labour party is in a coalition with the Green Party.</td></tr>
+</tbody>
+</table>
 </div>
 
 </section>
