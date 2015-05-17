@@ -67,7 +67,7 @@ oneDistrictProportionality :: I.Input -> I.Parliament
 oneDistrictProportionality input =
     map
         (second (I.calculateProportion input))
-        (U.frequences $ I.firstChoices input)
+        (U.frequencies $ I.firstChoices input)
 
 -- | The party with the most votes wins in each district.
 plurality :: I.Input -> I.Parliament
@@ -82,7 +82,7 @@ plurality input =
         fst $ 
             maximumBy
                 (compare `on` snd)
-                (U.frequences (I.firstChoicesAmongVoters voters))
+                (U.frequencies (I.firstChoicesAmongVoters voters))
 
 
 -- | In each district all parties but the two with the most votes are excluded.
@@ -110,7 +110,7 @@ runOffPlurality input =
             take 2 $
                 sortBy
                     (flip compare `on` snd)
-                    (U.frequences $ I.firstChoicesAmongVoters voters)
+                    (U.frequencies $ I.firstChoicesAmongVoters voters)
         hasMajority :: Int -> Bool
         hasMajority votes = length voters <= (votes * 2)
         runOff :: I.Party -> I.Party -> I.Party
@@ -154,7 +154,7 @@ multiDistrictProportionality input =
             (V.fromList $
                 map 
                     (\(party, votes) -> (party, votes, 0))
-                    (U.frequences (I.firstChoicesAmongVoters voters))
+                    (U.frequencies (I.firstChoicesAmongVoters voters))
             )
             (I.numberOfSeatsByDistrictID input districtID)
 
@@ -235,7 +235,7 @@ mixedMember2 input share =
 thresholdProportionality :: I.Input -> Double -> I.Parliament
 thresholdProportionality input threshold =
     calculateSeats $
-        filter ((>= requiredVotes) . snd) (U.frequences $ I.firstChoices input)
+        filter ((>= requiredVotes) . snd) (U.frequencies $ I.firstChoices input)
   where
     requiredVotes :: Int
     requiredVotes = round $ threshold * fromIntegral (I.nvoters input)
@@ -340,7 +340,7 @@ singleTransferableVote :: I.Input
                        -> Map.Map Int Int  -- ^ keys are candidate ids and values are their parties
                        -> I.Parliament
 singleTransferableVote input candidates'Party =
-    U.frequences $
+    U.frequencies $
         concatMap
             (map (candidates'Party Map.!) . stvInDistrict)
             (I.districts input)
