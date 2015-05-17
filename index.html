@@ -3,8 +3,8 @@
 <head>
         <title>virtual-arrow</title>
         <meta charset="utf-8" />
-        <link rel="stylesheet" href="/theme/css/main.css" type="text/css" />
-        <link rel="stylesheet" href="/theme/css/pygment.css" type="text/css" />
+        <link rel="stylesheet" href="theme/css/main.css" type="text/css" />
+        <link rel="stylesheet" href="theme/css/pygment.css" type="text/css" />
 
         <!--[if IE]>
                 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
@@ -101,7 +101,10 @@
 <div class="highlight"><pre><span class="nv">$ </span>./virtual-arrow gallagher -r borda.csv -d example/constituencies.csv -v example/voters.csv -p 5
 &gt; 14.771806468611409
 </pre></div>
-<p>We see that representaviness increases in case of the Borda Count.</p>
+<p>We see that representaviness increases in case of the <cite>Borda Count</cite>, the result that can be further improved in case of <cite>Run-off plurality</cite>:</p>
+<div class="highlight"><pre><span class="nv">$ </span>./virtual-arrow gallagher -r run-off.csv -d example/constituencies.csv -v example/voters.csv -p 5
+&gt; 11.541130581035421
+</pre></div>
 <p>To see the complete description of available commands and their arguments, run:</p>
 <div class="highlight"><pre><span class="nv">$ </span>./virtual-arrow --help
 <span class="nv">$ </span>./virtual-arrow result --help
