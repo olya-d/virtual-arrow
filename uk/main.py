@@ -100,7 +100,7 @@ rows = []
 with open('2015.csv') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-        if row['Country'] == 'England' and len(rows) < 1000:
+        if row['Country'] == 'England':
             rows.append(row)
 
 voters = []
@@ -126,6 +126,8 @@ for constituency, results in itertools.groupby(rows, lambda x: x['Constituency']
         if result['Party'] not in considered_parties:
             electorate_size -= get_int(result['Votes'])
         else:
+            if result['Place'] == '1' and result['Party'] == 'UKIP':
+                print 'hello'
             voters.append({
                 'district': len(constituencies) - 1,
                 'preferences': generate_preferences(result['Party']),
