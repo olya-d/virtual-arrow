@@ -1,0 +1,20 @@
+\haddockmoduleheading{Interface.ReadCsv}
+\label{module:Interface.ReadCsv}
+\haddockbeginheader
+{\haddockverb\begin{verbatim}
+module Interface.ReadCsv (
+    readCSV,  readVotersFromCsv,  readParliamentFromCSV
+  ) where\end{verbatim}}
+\haddockendheader
+
+\begin{haddockdesc}
+\item[
+readCSV\ ::\ FromNamedRecord\ a\ =>\ FilePath\ ->\ IO\ {\char 91}a{\char 93}
+]
+\item[
+readVotersFromCsv\ ::\ FilePath\ ->\ IO\ {\char 91}Voter{\char 93}
+]
+\item[
+readParliamentFromCSV\ ::\ FilePath\ ->\ IO\ {\char 91}(Int,\ Int){\char 93}
+]
+\end{haddockdesc}

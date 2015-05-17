@@ -1,3 +1,8 @@
+{-|
+Module: VirtualArrow.Election
+Description: Functions that implement election systems.
+-}
+
 module VirtualArrow.Election
 (
     bordaCount,
@@ -32,50 +37,39 @@ sumSeatsAcrossDistricts results =
             (sortBy (compare `on` snd) results)
         )
 
-{--------------------------------------------------------------------
-  Borda Count 
---------------------------------------------------------------------}
-
--- | If voter placed party on the first place, it receives 0 points,
--- | on the second - 1 point and so on till n - 1 points.
--- | Under the Borda Count a candidate with the least number of votes wins.
-bordaWinner :: [I.Voter] -> I.Party
-bordaWinner [] = error "Can't find a winner without voters."
-bordaWinner voters =
-    V.minIndex (foldl accVotes (V.replicate nparties 0) voters)
-  where
-    nparties :: Int
-    nparties = length $ I.preferences (head voters)
-    accVotes :: V.Vector Int -> I.Voter -> V.Vector Int
-    accVotes acc voter =
-        V.zipWith (+) acc (I.prefToPlaces (I.preferences voter))
-
--- | Find the Borda Winner in each district. The winner gets all seats.
--- | Sum seats across districts.
+-- | Each party gets a number of points for each ballot:
+-- 0 if it is on the first place in the ballot, 1 if on the second
+-- and so on till n - 1 points. A candidate with the least number of votes wins.
+-- To determine the resulting parliament find a winner for each district. 
+-- Assign all seats to the winner, sum seats across districts.
 bordaCount :: I.Input -> I.Parliament
 bordaCount input =
     sumSeatsAcrossDistricts $
         map
-            (I.numberOfSeatsByDistrictID input *** bordaWinner)
+            (I.numberOfSeatsByDistrictID input *** winner)
             (Map.toList $ I.districtMap input) -- [(I.DistrictID, [I.Voter])]
+  where
+    winner :: [I.Voter] -> I.Party
+    winner [] = error "Can't find a winner without voters."
+    winner voters =
+        V.minIndex (foldl accVotes (V.replicate nparties 0) voters)
+      where
+        nparties :: Int
+        nparties = length $ I.preferences (head voters)
+        accVotes :: V.Vector Int -> I.Voter -> V.Vector Int
+        accVotes acc voter =
+            V.zipWith (+) acc (I.prefToPlaces (I.preferences voter))
 
-{--------------------------------------------------------------------
-  One-district Proportionality
---------------------------------------------------------------------}
 
--- | The districts are aggregated, the seats in the parliament are distributed
--- | according to the shares of (first) votes in the electorate.
+-- | Districts are aggregated into one and seats in the parliament are 
+-- distributed proportionally to the first preferences in the electorate.
 oneDistrictProportionality :: I.Input -> I.Parliament
 oneDistrictProportionality input =
     map
         (second (I.calculateProportion input))
         (U.frequences $ I.firstChoices input)
 
-{--------------------------------------------------------------------
-  Plurality
---------------------------------------------------------------------}
-
--- | The candidate (i.e. the party) with the most votes wins in each district.
+-- | The party with the most votes wins in each district.
 plurality :: I.Input -> I.Parliament
 plurality input =
     sumSeatsAcrossDistricts $
@@ -90,15 +84,12 @@ plurality input =
                 (compare `on` snd)
                 (U.frequences (I.firstChoicesAmongVoters voters))
 
-{--------------------------------------------------------------------
-  Run-off Plurality
---------------------------------------------------------------------} 
 
 -- | In each district all parties but the two with the most votes are excluded.
--- | The second round is implemented with these two parties only and 
--- | the one with the most votes wins. 
--- | If after the first round the first party has at least 50% of the votes, 
--- | it is elected without the need of a second round. 
+-- The second round is implemented with these two parties only and 
+-- the one with the most votes wins. 
+-- If after the first round the first party has at least 50% of the votes, 
+-- it is elected without the need of a second round. 
 runOffPlurality :: I.Input -> I.Parliament
 runOffPlurality input =
     sumSeatsAcrossDistricts $
@@ -129,18 +120,10 @@ runOffPlurality input =
           where
             prefer1 preferences =
                 V.elemIndex p1 preferences > V.elemIndex p2 preferences
-       
-{--------------------------------------------------------------------
-  Multi-district pro®portionality 
---------------------------------------------------------------------} 
 
--- | In each district seats are allocated using Sainte-Laguë method:
--- | successive quotients are calculated for each party, whichever party has
--- | the highest quotient gets the next seat allocated.
--- | The process is repeated until all seats have been allocated.
-
--- | [(I.Party, number of votes, number of allocated seats)] --> seats left ->
--- | [(I.Party, number of allocated seats)]
+-- | Helper function for multiDistrictProportionality.
+-- [(I.Party, number of votes, number of allocated seats)] --> seats left ->
+-- [(I.Party, number of allocated seats)]
 distributeSeats :: V.Vector (I.Party, Int, I.NumberOfSeats) -> Int-> [PartyResult]
 distributeSeats result 0 = V.toList $ V.map (\(p, _, s) -> (s, p)) result
 distributeSeats result seatsLeft =
@@ -154,6 +137,11 @@ distributeSeats result seatsLeft =
     quota :: (I.Party, Int, Int) -> Double
     quota (_, v, s) = v U./. (s * 2 + 1)
 
+-- | In each district seats are allocated using 
+-- <http://en.wikipedia.org/wiki/Sainte-Lagu%C3%AB_method Sainte-Laguë method>:
+-- successive quotients are calculated for each party, whichever party has
+-- the highest quotient gets the next seat allocated.
+-- The process is repeated until all seats have been allocated.
 multiDistrictProportionality :: I.Input -> I.Parliament
 multiDistrictProportionality input =
     sumSeatsAcrossDistricts $
@@ -175,9 +163,9 @@ multiDistrictProportionality input =
 --------------------------------------------------------------------} 
 
 -- | One parliament is elected with the Plurality System,
--- | and one with Proportional System.
--- | The resulting parliament is a weighted mean of the two.
--- | Weight of the first parliament relative to the second is specified.
+-- and one with Proportional System.
+-- The resulting parliament is a weighted mean of the two.
+-- Weight of the first parliament relative to the second is specified.
 
 mixedMember1 :: I.Input -> Double -> I.Parliament
 mixedMember1 input weight =
@@ -199,9 +187,9 @@ mixedMember1 input weight =
   Mixed Member System, 2
 --------------------------------------------------------------------} 
 
--- | Part of parliament is elected with the Plurality System is computed,
--- | and the remainder is elected using the Proportional System.
--- | Share of seats to be elected with the Plurality System is specified.
+-- | Part of parliament is elected with the Plurality System,
+-- and the remainder is elected using the Proportional System.
+-- Share of seats to be elected with the Plurality System is specified.
 
 mixedMember2 :: I.Input -> Double -> I.Parliament
 mixedMember2 input share =
@@ -238,15 +226,12 @@ mixedMember2 input share =
         mergeParliaments :: I.Parliament -> I.Parliament -> I.Parliament
         mergeParliaments = zipWith (\(p, s1) (_, s2) -> (p, s1 + s2))
 
-{--------------------------------------------------------------------
-  Threshold Proportionality
---------------------------------------------------------------------} 
 
--- | All the parties who have a share of votes (strictly) smaller  
--- | are excluded from the parliament. 
--- | The seats are distributed proportionally among the remaining parties. 
--- | There is only one district.
 
+-- | All the parties who have an overall share of votes (strictly) smaller  
+-- are excluded from the parliament. 
+-- The seats are distributed proportionally among the remaining parties. 
+-- There is only one district.
 thresholdProportionality :: I.Input -> Double -> I.Parliament
 thresholdProportionality input threshold =
     calculateSeats $
@@ -266,26 +251,11 @@ thresholdProportionality input threshold =
         seats votes =
             round (fromIntegral votes * parliamentSizeToNumberOfCountedVotes)
 
-{--------------------------------------------------------------------
-  Single Transferable Vote
---------------------------------------------------------------------} 
 
--- | The seats for each party in each district are assigned 
--- | according to a quota value. If some seats are not assigned, 
--- | the votes unused by the elected candidates are transferred 
--- | to the next candidate in the elector's preference ordering,
--- | and the candidates with the highest number of votes are elected. 
--- | The operation is repeated until all the seats have been assigned. 
--- | If at a given round there is no assignment, 
--- | the candidate with less preference is excluded,
--- | and its votes are distributed as above. 
--- | The Droop quota is used and the votes are redistributed using
--- | the Gregory method (transfers partial votes).
-
-
--- | The current state (table) is a 2d array, s.t. [i,j] element
--- | = the order of preference of the ith candidate for the jth voter,
--- | starting from 1.
+-- | Helper function for singleTransferableVote
+-- The current state (table) is a 2d array, s.t. [i,j] element
+-- = the order of preference of the ith candidate for the jth voter,
+-- starting from 1.
 stv :: M.Matrix Double -> [I.Party]-> I.NumberOfSeats -> Int -> [I.Party]
 stv _ winners 0 _ = winners
 stv table winners numberOfSeats numOfCandidates =
@@ -352,10 +322,23 @@ stv table winners numberOfSeats numOfCandidates =
             | old == 2      = column V.! w * weight -- Transfer vote
             | otherwise     = old
 
--- | Single Transferable Vote is used with the list of candidates,
--- | thus the additional parameter (map) is required to determine
--- | the number of seats for each party.
-singleTransferableVote :: I.Input -> Map.Map Int Int -> I.Parliament
+-- | The seats for each party in each district are assigned 
+-- according to a quota value. If some seats are not assigned, 
+-- the votes unused by the elected candidates are transferred 
+-- to the next candidate in the elector's preference ordering,
+-- and the candidates with the highest number of votes are elected. 
+-- The operation is repeated until all the seats have been assigned. 
+-- If at a given round there is no assignment, 
+-- the candidate with less preference is excluded,
+-- and its votes are distributed as above. 
+-- The Droop quota is used and the votes are redistributed using
+-- the Gregory method (transfers partial votes).
+-- Single Transferable Vote is used with the list of candidates,
+-- thus the additional parameter (map) is required to determine
+-- the number of seats for each party.
+singleTransferableVote :: I.Input 
+                       -> Map.Map Int Int  -- ^ keys are candidate ids and values are their parties
+                       -> I.Parliament
 singleTransferableVote input candidates'Party =
     U.frequences $
         concatMap

@@ -1,3 +1,12 @@
+{-|
+Module: Interface.ReadCsv
+Description: Utitlity functions for parsing csv files.
+
+The module contains utitlity functions for parsing csv files.
+The functions are defined using 
+<http://hackage.haskell.org/package/cassava cassava> package.
+-}
+
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
 
@@ -10,7 +19,6 @@ module Interface.ReadCsv
 
 import qualified VirtualArrow.Input as I
 import qualified Data.Vector as V
-import qualified Data.Text as T
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Char8 as BC
 import Data.Csv
@@ -52,6 +60,7 @@ instance FromNamedRecord I.Candidate where
         r .: "candidateID" <*>
         r .: "party"
 
+-- | Functions parses csv according to the expected format.
 readCSV :: FromNamedRecord a => FilePath -> IO [a]
 readCSV path = do
   c <- BL.readFile path

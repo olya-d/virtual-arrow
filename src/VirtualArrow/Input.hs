@@ -1,14 +1,24 @@
+{-|
+Module: VirtualArrow.Input
+Description: Definitions of data structures.
+
+This module defines data structures and accompanying functions.
+-}
+
 module VirtualArrow.Input
 (
+    -- * Types
     Preferences,
-    Parliament,
     DistrictID,
+    Party,
+    NumberOfSeats,
+    Parliament,
+    -- * Data types
     Candidate(..),
     District(..),
     Voter(..),
     Input(..),
-    Party,
-    NumberOfSeats,
+    -- * Functions
     parliamentSize,
     numberOfSeatsByDistrictID,
     numberOfSeatsByDistrict,
@@ -30,13 +40,14 @@ import Data.Function (on)
 import Control.Arrow ((&&&))
 
 
--- List of parties ordered by voter's preference
+-- | Vector of parties ordered by voter's preference.
 type Preferences = V.Vector Int
 
 type DistrictID = Int
 type NumberOfSeats = Int
 type Party = Int
 
+-- | The resulting parliament.
 type Parliament = [(Party, NumberOfSeats)]
 
 data Candidate = Candidate
@@ -45,18 +56,23 @@ data Candidate = Candidate
     }
     deriving (Show)
 
+-- | Represents one electoral district (constituency).
 data District = District
     { districtID :: !DistrictID
     , nseats :: !NumberOfSeats
     }
     deriving (Show)
 
+-- | Represents one voter in a district. 
 data Voter = Voter
     { district :: !DistrictID
     , preferences :: !Preferences
     }
     deriving (Show)
 
+-- | Represents input to the program - collection of districts, voters
+-- number of parties and internally calculated (using 'votersByDistrict') 
+-- map from district id to votes.
 data Input = Input
     { districts :: ![District]
     , voters :: ![Voter]
@@ -67,7 +83,7 @@ data Input = Input
 
 
 -- | Returns vector of places,
--- | s.t. ! i = place of ith party in the list of preferences.
+-- s.t. @! i@ is the place of ith party in the list of preferences.
 prefToPlaces :: Preferences -> V.Vector Int
 prefToPlaces pref =
     V.map index (V.fromList [0..p - 1])
@@ -88,40 +104,40 @@ numberOfSeatsByDistrictID :: Input -> DistrictID -> NumberOfSeats
 numberOfSeatsByDistrictID input dID =
     nseats (head $ filter (\x -> districtID x == dID) (districts input))
 
--- | Returns list of pairs (district id, number of seats in the district).
 numberOfSeatsByDistrict :: Input -> [(DistrictID, NumberOfSeats)]
 numberOfSeatsByDistrict input =
     [(i, numberOfSeatsByDistrictID input i) | i <- districtIDs input]
 
 -- | Returns list of first choices (first preference)
--- | for each voter in the input.
+-- for each voter in the input.
 firstChoices :: Input -> [Party]
 firstChoices input = map (V.head . preferences) (voters input)
 
 -- | Returns list of first choices (first preference) for each voter
--- | in the list.
+-- in the list.
 firstChoicesAmongVoters :: [Voter] -> [Party]
 firstChoicesAmongVoters = map (V.head . preferences)
 
--- | = total number of seats.
+-- | Total number of seats.
 parliamentSize :: Input -> NumberOfSeats
 parliamentSize input = sum (map nseats (districts input))
 
--- | = total number of voters.
+-- | Total number of voters.
 nvoters :: Input -> Int
 nvoters input = length (voters input)
 
--- | Returns proportion of parliament corresponding to x (number of votes).
-calculateProportion :: Input -> Int -> Int
+-- | Returns proportion of parliament corresponding to the number of votes.
+calculateProportion :: Input 
+                  -> Int -- ^ number of votes
+                  -> Int
 calculateProportion input x =
     round ((x * parliamentSize input) /. nvoters input)
 
--- | Returns pairs (district id, voters in that district)
 votersByDistrict :: [Voter] -> [(DistrictID, [Voter])]
-votersByDistrict voters =
-    map (\g -> (district (head g), g)) (groupBy ((==) `on` district) voters)
+votersByDistrict vs =
+    map (\g -> (district (head g), g)) (groupBy ((==) `on` district) vs)
 
--- | Returns map from candidate id (Party) to party.
-candidateMap :: [Candidate] -> Map.Map Int Int
+-- | Returns map from candidate id to party.
+candidateMap :: [Candidate] -> Map.Map Int Party
 candidateMap list = Map.fromList $ 
     map (candidateID Control.Arrow.&&& party) list

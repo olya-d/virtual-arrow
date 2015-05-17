@@ -1,0 +1,88 @@
+\haddockmoduleheading{VirtualArrow.Election}
+\label{module:VirtualArrow.Election}
+\haddockbeginheader
+{\haddockverb\begin{verbatim}
+module VirtualArrow.Election (
+    bordaCount,  oneDistrictProportionality,  plurality,  runOffPlurality, 
+    multiDistrictProportionality,  mixedMember1,  mixedMember2, 
+    thresholdProportionality,  singleTransferableVote
+  ) where\end{verbatim}}
+\haddockendheader
+
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+bordaCount\ ::\ Input\ ->\ Parliament
+\end{tabular}]\haddockbegindoc
+Find the Borda Winner in each district. The winner gets all seats.
+ | Sum seats across districts.\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+oneDistrictProportionality\ ::\ Input\ ->\ Parliament
+\end{tabular}]\haddockbegindoc
+The districts are aggregated, the seats in the parliament are distributed
+ | according to the shares of (first) votes in the electorate.\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+plurality\ ::\ Input\ ->\ Parliament
+\end{tabular}]\haddockbegindoc
+The candidate (i.e. the party) with the most votes wins in each district.\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+runOffPlurality\ ::\ Input\ ->\ Parliament
+\end{tabular}]\haddockbegindoc
+In each district all parties but the two with the most votes are excluded.
+ | The second round is implemented with these two parties only and 
+ | the one with the most votes wins. 
+ | If after the first round the first party has at least 50{\char '45} of the votes, 
+ | it is elected without the need of a second round. \par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[
+multiDistrictProportionality\ ::\ Input\ ->\ Parliament
+]
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+mixedMember1\ ::\ Input\ ->\ Double\ ->\ Parliament
+\end{tabular}]\haddockbegindoc
+One parliament is elected with the Plurality System,
+ | and one with Proportional System.
+ | The resulting parliament is a weighted mean of the two.
+ | Weight of the first parliament relative to the second is specified.\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+mixedMember2\ ::\ Input\ ->\ Double\ ->\ Parliament
+\end{tabular}]\haddockbegindoc
+Part of parliament is elected with the Plurality System is computed,
+ | and the remainder is elected using the Proportional System.
+ | Share of seats to be elected with the Plurality System is specified.\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+thresholdProportionality\ ::\ Input\ ->\ Double\ ->\ Parliament
+\end{tabular}]\haddockbegindoc
+All the parties who have a share of votes (strictly) smaller  
+ | are excluded from the parliament. 
+ | The seats are distributed proportionally among the remaining parties. 
+ | There is only one district.\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+singleTransferableVote\ ::\ Input\ ->\ Map\ Int\ Int\ ->\ Parliament
+\end{tabular}]\haddockbegindoc
+Single Transferable Vote is used with the list of candidates,
+ | thus the additional parameter (map) is required to determine
+ | the number of seats for each party.\par
+
+\end{haddockdesc}

@@ -1,3 +1,8 @@
+{-|
+Module: VirtualArrow.Indices
+Description: Definitions of indices of proportionality and governability.
+-}
+
 module VirtualArrow.Indices
 (
     representativeness,
@@ -8,33 +13,8 @@ import VirtualArrow.Input
 import VirtualArrow.Election (oneDistrictProportionality)
 
 
--- representativeness :: Input -> Parliament -> Double
--- representativeness input parliament =
---    (1 - fromIntegral upperSum / fromIntegral lowerSum)
---   where
---     proportionalParliament :: Parliament
---     proportionalParliament = oneDistrictProportionality input
---     largestParty :: (Party, Int)
---     largestParty = maximumBy (comparing snd) parliament
---     lowerSum :: Int
---     lowerSum = 
---         foldl 
---             (\acc (party, seats) -> 
---                 if party == fst largestParty 
---                     then acc + abs(parliamentSize input - seats)
---                 else
---                     acc + seats
---             )
---             0
---             proportionalParliament
---     upperSum :: Int
---     upperSum = 
---         sum $
---             zipWith  
---                 (\(_, s1) (_, s2) -> abs(s1 - s2))
---                 parliament proportionalParliament
 
--- | Based on Gallagher Index
+-- | Calculates <http://en.wikipedia.org/wiki/Gallagher_Index Gallagher Index>
 representativeness :: Input -> Parliament -> Double
 representativeness input parliament =
     sqrt (1.0/2.0 * fromIntegral s) / 

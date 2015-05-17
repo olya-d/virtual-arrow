@@ -1,3 +1,12 @@
+{-|
+Module: Interface.CommandLine
+Description: Definitions of command-line commands and their parsers.
+
+This module defines parsers for command-line commands using 
+<http://hackage.haskell.org/package/optparse-applicative optparse-applicative>
+package.
+-}
+
 module Interface.CommandLine
 (
     Command(..),
@@ -83,6 +92,7 @@ parseROptions = ROptions
         ( long "number_of_parties"
         <> short 'p')
 
+-- | Parses the call of virtual-arrow from the command-line.
 parser :: Parser Command
 parser =
     subparser

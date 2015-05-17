@@ -1,0 +1,174 @@
+\haddockmoduleheading{VirtualArrow.Input}
+\label{module:VirtualArrow.Input}
+\haddockbeginheader
+{\haddockverb\begin{verbatim}
+module VirtualArrow.Input (
+    Preferences,  Parliament,  DistrictID, 
+    Candidate(Candidate, candidateID, party), 
+    District(District, districtID, nseats), 
+    Voter(Voter, district, preferences), 
+    Input(Input, districts, voters, nparties, districtMap),  Party, 
+    NumberOfSeats,  parliamentSize,  numberOfSeatsByDistrictID, 
+    numberOfSeatsByDistrict,  nvoters,  firstChoices,  firstChoicesAmongVoters, 
+    calculateProportion,  prefToPlaces,  votersByDistrict,  candidateMap
+  ) where\end{verbatim}}
+\haddockendheader
+
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+type\ Preferences\ =\ Vector\ Int
+\end{tabular}]
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+type\ Parliament\ =\ {\char 91}(Party,\ NumberOfSeats){\char 93}
+\end{tabular}]
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+type\ DistrictID\ =\ Int
+\end{tabular}]
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+data\ Candidate
+\end{tabular}]\haddockbegindoc
+\haddockbeginconstrs
+\haddockdecltt{=} & \haddockdecltt{Candidate} & \\
+                    \haddockdecltt{candidateID :: !Int} &
+                    \haddockdecltt{party :: !Int} &
+\end{tabulary}\par
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+instance\ Show\ Candidate
+\end{tabular}]
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+data\ District
+\end{tabular}]\haddockbegindoc
+\haddockbeginconstrs
+\haddockdecltt{=} & \haddockdecltt{District} & \\
+                    \haddockdecltt{districtID :: !DistrictID} &
+                    \haddockdecltt{nseats :: !NumberOfSeats} &
+\end{tabulary}\par
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+instance\ Show\ District
+\end{tabular}]
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+data\ Voter
+\end{tabular}]\haddockbegindoc
+\haddockbeginconstrs
+\haddockdecltt{=} & \haddockdecltt{Voter} & \\
+                    \haddockdecltt{district :: !DistrictID} &
+                    \haddockdecltt{preferences :: !Preferences} &
+\end{tabulary}\par
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+instance\ Show\ Voter
+\end{tabular}]
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+data\ Input
+\end{tabular}]\haddockbegindoc
+\haddockbeginconstrs
+\haddockdecltt{=} & \haddockdecltt{Input} & \\
+                    \haddockdecltt{districts :: ![District]} &
+                    \haddockdecltt{voters :: ![Voter]} &
+                    \haddockdecltt{nparties :: !Int} &
+                    \haddockdecltt{districtMap :: Map DistrictID [Voter]} &
+\end{tabulary}\par
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+instance\ Show\ Input
+\end{tabular}]
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+type\ Party\ =\ Int
+\end{tabular}]
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+type\ NumberOfSeats\ =\ Int
+\end{tabular}]
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+parliamentSize\ ::\ Input\ ->\ NumberOfSeats
+\end{tabular}]\haddockbegindoc
+\section*{total number of seats.}
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+numberOfSeatsByDistrictID\ ::\ Input\ ->\ DistrictID\ ->\ NumberOfSeats
+\end{tabular}]\haddockbegindoc
+Returns number of seats by district id.\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+numberOfSeatsByDistrict\ ::\ Input\ ->\ {\char 91}(DistrictID,\ NumberOfSeats){\char 93}
+\end{tabular}]\haddockbegindoc
+Returns list of pairs (district id, number of seats in the district).\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+nvoters\ ::\ Input\ ->\ Int
+\end{tabular}]\haddockbegindoc
+\section*{total number of voters.}
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+firstChoices\ ::\ Input\ ->\ {\char 91}Party{\char 93}
+\end{tabular}]\haddockbegindoc
+Returns list of first choices (first preference)
+ | for each voter in the input.\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+firstChoicesAmongVoters\ ::\ {\char 91}Voter{\char 93}\ ->\ {\char 91}Party{\char 93}
+\end{tabular}]\haddockbegindoc
+Returns list of first choices (first preference) for each voter
+ | in the list.\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+calculateProportion\ ::\ Input\ ->\ Int\ ->\ Int
+\end{tabular}]\haddockbegindoc
+Returns proportion of parliament corresponding to x (number of votes).\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+prefToPlaces\ ::\ Preferences\ ->\ Vector\ Int
+\end{tabular}]\haddockbegindoc
+Returns vector of places,
+ | s.t. ! i = place of ith party in the list of preferences.\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+votersByDistrict\ ::\ {\char 91}Voter{\char 93}\ ->\ {\char 91}(DistrictID,\ {\char 91}Voter{\char 93}){\char 93}
+\end{tabular}]\haddockbegindoc
+Returns pairs (district id, voters in that district)\par
+
+\end{haddockdesc}
+\begin{haddockdesc}
+\item[\begin{tabular}{@{}l}
+candidateMap\ ::\ {\char 91}Candidate{\char 93}\ ->\ Map\ Int\ Int
+\end{tabular}]\haddockbegindoc
+Returns map from candidate id (Party) to party.\par
+
+\end{haddockdesc}
