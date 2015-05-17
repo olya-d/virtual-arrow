@@ -293,7 +293,7 @@ stv table winners numberOfSeats numOfCandidates =
     -- find the candidate that was not removed (does not have 0s in the row).
     if numberOfSeats == 1 && numOfCandidates == 1 then 
         fromMaybe 0 
-            (findIndex (\r -> 0.0 /= (r V.! 0)) tableRows) - 1:winners
+            (findIndex (\r -> 0.0 /= (r V.! 0)) tableRows):winners
     else
     case winner of
         Just w ->
