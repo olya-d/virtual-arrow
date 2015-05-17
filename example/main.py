@@ -66,38 +66,13 @@ considered_parties = {
     'Labour': 0,
     'UKIP': 1,
     'Conservative': 2,
-    # 'Plaid Cymru': 3,
     'Liberal Democrat': 3,
-    'Green Party': 4,
-    # 'Scottish National Party': 6,
+    'Green Party': 4
 }
-
-# scotland = {
-#     'Labour': 0,
-#     'UKIP': 0,
-#     'Conservative': 0,
-#     'Plaid Cymru': 0,
-#     'Liberal Democrat': 0,
-#     'Green Party': 0,
-#     'Scottish National Party': 0,
-#     'Total votes': 0,
-#     'Total voters': 0
-# }
-# wales = {
-#     'Labour': 0,
-#     'UKIP': 0,
-#     'Conservative': 0,
-#     'Plaid Cymru': 0,
-#     'Liberal Democrat': 0,
-#     'Green Party': 0,
-#     'Scottish National Party': 0,
-#     'Total votes': 0,
-#     'Total voters': 0
-# }
 
 rows = []
 
-with open('2015.csv') as csvfile:
+with open('uk_2015.csv') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         if row['Country'] == 'England':

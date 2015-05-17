@@ -6,6 +6,5 @@ data/
 *.iml
 virtual-arrow-profiling.hp
 virtual-arrow-profiling.prof
-*.csv
-uk/*.csv
 cabal.config
+*.csv

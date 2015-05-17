@@ -23,8 +23,8 @@ printParliament parliament = do
 
 main :: IO ()
 main = do
-    districts <- Csv.readCSV "uk/constituencies.csv" :: IO [District]
-    voters <- Csv.readVotersFromCsv "uk/voters.csv"
+    districts <- Csv.readCSV "example/constituencies.csv" :: IO [District]
+    voters <- Csv.readVotersFromCsv "example/voters.csv"
     let input = Input{ districts=districts
                      , voters=voters
                      , nparties=5
