@@ -92,7 +92,7 @@
 <span class="mi">4</span><span class="p">,</span><span class="mi">23</span>
 </pre></div>
 <p>Which gives the structure of the elected parliament (the Labour Party has 170 seats, the United Kingdom Independent Party has 76 seats, and so on).</p>
-<p>This output (if saved as <cite>one-district.csv</cite>) can be further used as an input for calculating the index of representaviness according to <a class="reference external" href="http://en.wikipedia.org/wiki/Gallagher_Index">Gallagher</a>:</p>
+<p>This output (if saved as <cite>one-district.csv</cite>) can be further used as an input for calculating the index of representativeness according to <a class="reference external" href="http://en.wikipedia.org/wiki/Gallagher_Index">Gallagher</a>:</p>
 <div class="highlight"><pre>./virtual-arrow gallagher -r one-district.csv -d example/constituencies.csv -v example/voters.csv -p 5
 </pre></div>
 <p>And the output is</p>
@@ -109,11 +109,11 @@
 <div class="highlight"><pre><span class="nv">$ </span>./virtual-arrow gallagher -r borda.csv -d example/constituencies.csv -v example/voters.csv -p 5
 &gt; 14.771806468611409
 </pre></div>
-<p>We see that representaviness increases in case of the <cite>Borda count</cite>, the result that can be further improved in case of <cite>run-off plurality</cite>:</p>
+<p>We see that representativeness increases in case of the <cite>Borda count</cite>, the result that can be further improved in case of <cite>run-off plurality</cite>:</p>
 <div class="highlight"><pre><span class="nv">$ </span>./virtual-arrow gallagher -r run-off.csv -d example/constituencies.csv -v example/voters.csv -p 5
 &gt; 11.541130581035421
 </pre></div>
-<p>Increase in the representaviness can lead to more fragmented parliament. Under <cite>plurality</cite> the Conservative party has a clear majorty, and under <cite>run-off plurality</cite> it has to govern in coaltion with the Liberal Democrat Party <a class="footnote-reference" href="#id6" id="id3">[3]</a>. Hence, the governability index decreases:</p>
+<p>Increase in the representativeness can lead to more fragmented parliament. Under <cite>plurality</cite> the Conservative party has a clear majority, and under <cite>run-off plurality</cite> it has to govern in coalition with the Liberal Democrat Party <a class="footnote-reference" href="#id6" id="id3">[3]</a>. Hence, the governability index decreases:</p>
 <div class="highlight"><pre><span class="nv">$ </span>./virtual-arrow governability -r plurality.csv -c coalitions.csv
 &gt; 0.6097560975609756
 <span class="nv">$ </span>./virtual-arrow governability -r run-off.csv -c coalitions.csv
@@ -126,7 +126,7 @@
 <table class="docutils footnote" frame="void" id="id4" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>In the UK example only constituencies located in England are taken into account as I do not have enough data to predict the second and further orders of preferences for voters in Scotland, Wales and Nothern Ireland. Thus regional parties, such as Scottish National Party, Democratic Unionist Party, Sinn Fein and so on, are not considered.</td></tr>
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>In the UK example only constituencies located in England are taken into account as I do not have enough data to predict the second and further orders of preferences for voters in Scotland, Wales and Northern Ireland. Thus regional parties, such as Scottish National Party, Democratic Unionist Party, Sinn Fein and so on, are not considered.</td></tr>
 </tbody>
 </table>
 <table class="docutils footnote" frame="void" id="id5" rules="none">
