@@ -93,8 +93,13 @@ runRCommand opts = do
         (CL.rVotersCsv opts) 
         (CL.rNumberOfParties opts)
     parliament <- Csv.readParliamentFromCSV (CL.resultCSV opts) :: IO Parliament
-    print $ gallagherIndex input parliament
-            
+    case CL.rCandidateListCsv opts of
+        Just ccsv -> do
+            candidates <- Csv.readCSV ccsv :: IO [Candidate]
+            print $ gallagherIndex input parliament (Just (candidateMap candidates))
+        Nothing ->
+            print $ gallagherIndex input parliament Nothing
+
 -- | Read command-line arguments and starts processing of the supplied command.
 -- Used by "Main" in the main function.
 run :: CL.Command -> IO()

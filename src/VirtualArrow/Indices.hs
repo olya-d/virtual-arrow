@@ -11,20 +11,28 @@ where
 
 import VirtualArrow.Input
 import VirtualArrow.Election (oneDistrictProportionality)
-
-
+import qualified Data.Map.Strict as Map
+import Control.Arrow
 
 -- | Calculates <http://en.wikipedia.org/wiki/Gallagher_Index Gallagher Index>
-gallagherIndex :: Input -> Parliament -> Double
-gallagherIndex input parliament =
+gallagherIndex :: Input -> Parliament -> Maybe (Map.Map Int Party)-> Double
+gallagherIndex input parliament candidates =
     sqrt (1.0/2.0 * fromIntegral s) / 
     fromIntegral (parliamentSize input) * 100.0
   where
     s :: Int
     s = sum $ zipWith
         (\(_, s1) (_, s2) -> (s1 - s2) * (s1 - s2))
-        (oneDistrictProportionality input)
+        proportionalityParliament
         parliament
+    proportionalityParliament :: Parliament
+    proportionalityParliament =
+        case candidates of
+            Just m -> 
+                map 
+                    (first ((Map.!) m))
+                    (oneDistrictProportionality input)
+            Nothing -> oneDistrictProportionality input
 
 -- governability :: Parliament -> [(Party, Int)] -> Double
 -- governability parliament coalitions =

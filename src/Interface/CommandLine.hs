@@ -35,6 +35,7 @@ data GallagherOptions = GallagherOptions
     , rDistrictCsv :: String
     , rVotersCsv :: String
     , rNumberOfParties :: Int
+    , rCandidateListCsv :: Maybe String 
     }
 
 data Command = Result ResultOptions | Gallagher GallagherOptions
@@ -91,6 +92,10 @@ parseGallagherOptions = GallagherOptions
     <*> option auto
         ( long "number_of_parties"
         <> short 'p')
+    <*> optional (strOption
+        ( long "candidate_list_csv"
+        <> short 'c'
+        <> help "Required in case of stv. File should contain header candidateID,party"))
 
 -- | Parses the call of virtual-arrow from the command-line.
 parser :: Parser Command

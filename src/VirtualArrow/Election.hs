@@ -350,7 +350,7 @@ singleTransferableVote input candidates'Party =
         stv (table voters) [] (I.nseats district) (I.nparties input)
       where
         voters :: [I.Voter]
-        voters = (I.districtMap input) Map.! (I.districtID district)
+        voters = I.districtMap input Map.! I.districtID district
     table :: [I.Voter] -> M.Matrix Double
     table vs = M.transpose $ M.fromLists (map oneVoterBallot vs)
     oneVoterBallot :: I.Voter -> [Double]

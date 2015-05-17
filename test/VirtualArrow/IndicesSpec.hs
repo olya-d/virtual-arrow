@@ -1,7 +1,7 @@
 module VirtualArrow.IndicesSpec (main, spec) where
 
 import VirtualArrow.Factory
-import VirtualArrow.Indices (representativeness)
+import VirtualArrow.Indices (gallagherIndex)
 import Test.Hspec
 
 
@@ -10,12 +10,12 @@ main = hspec spec
 
 spec :: Spec
 spec = do
-    describe "VirtualArrow.Indices.representativeness" $ do
+    describe "VirtualArrow.Indices.gallagherIndex" $ do
         it "should be 0 in case of oneDistrictProportionality" $
-            representativeness input oneDistrictProportionalityResult
+            gallagherIndex input oneDistrictProportionalityResult Nothing
             `shouldBe`
             0.0
 
-        it "should return the index of representativeness" $ do
-            representativeness input bordaCountResult `shouldBe` bordaCountR
-            representativeness input mixedMember2Result `shouldBe` mixedMember2R
+        it "should return the index of gallagherIndex" $ do
+            gallagherIndex input bordaCountResult Nothing `shouldBe` bordaCountR
+            gallagherIndex input mixedMember2Result Nothing `shouldBe` mixedMember2R

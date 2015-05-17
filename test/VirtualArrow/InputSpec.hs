@@ -35,8 +35,8 @@ spec = do
 
     describe "VirtualArrow.Input.firstChoicesAmongVoters" $
         it "returns list of the first choice for each voter" $ do
-            firstChoicesAmongVoters ((districtMap input) Map.! 1) `shouldBe` [0, 1, 0, 0, 1]
-            firstChoicesAmongVoters ((districtMap input) Map.! 2) `shouldBe` [1, 1, 1]
+            firstChoicesAmongVoters (districtMap input Map.! 1) `shouldBe` [0, 1, 0, 0, 1]
+            firstChoicesAmongVoters (districtMap input Map.! 2) `shouldBe` [1, 1, 1]
 
     describe "VirtualArrow.Input.numberOfSeats" $
         it "returns the total number of seats" $
