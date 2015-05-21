@@ -10,9 +10,9 @@ package.
 module Interface.CommandLine
 (
     Command(..),
-    ResultOptions(..),
-    GallagherOptions(..),
-    GovernabilityOptions(..),
+    Options(..),
+    -- GallagherOptions(..),
+    -- GovernabilityOptions(..),
     parser
 )
 where
@@ -20,8 +20,31 @@ where
 import Options.Applicative
 
 
-data ResultOptions = ResultOptions
-    { system :: String
+-- data ResultOptions = ResultOptions
+--     { system :: String
+--     , districtCsv :: String
+--     , votersCsv :: String
+--     , numberOfParties :: Int
+--     , candidateListCsv :: Maybe String 
+--     , weight :: Maybe Double
+--     , share :: Maybe Double
+--     , threshold :: Maybe Double
+--     }
+
+-- data GallagherOptions = GallagherOptions
+--     { rResultCSV :: String
+--     , rDistrictCsv :: String
+--     , rVotersCsv :: String
+--     , rNumberOfParties :: Int
+--     , rCandidateListCsv :: Maybe String 
+--     }
+
+-- data GovernabilityOptions = GovernabilityOptions
+--     { gResultCSV :: String
+--     , gCoalitionCsv :: String 
+--     }
+
+data Options = ResultOptions { system :: String
     , districtCsv :: String
     , votersCsv :: String
     , numberOfParties :: Int
@@ -29,27 +52,23 @@ data ResultOptions = ResultOptions
     , weight :: Maybe Double
     , share :: Maybe Double
     , threshold :: Maybe Double
-    }
-
-data GallagherOptions = GallagherOptions
+    } | GallagherOptions
     { rResultCSV :: String
     , rDistrictCsv :: String
     , rVotersCsv :: String
     , rNumberOfParties :: Int
     , rCandidateListCsv :: Maybe String 
-    }
-
-data GovernabilityOptions = GovernabilityOptions
+    } | GovernabilityOptions
     { gResultCSV :: String
     , gCoalitionCsv :: String 
     }
 
 data Command = 
-      Result ResultOptions 
-    | Gallagher GallagherOptions 
-    | Governability GovernabilityOptions
+      Result Options 
+    | Gallagher Options 
+    | Governability Options
 
-parseResultOptions :: Parser ResultOptions
+parseResultOptions :: Parser Options
 parseResultOptions = ResultOptions
     <$> strOption
         ( long "system"
@@ -66,7 +85,8 @@ parseResultOptions = ResultOptions
         <> help "File should contain header voterID,district,preferences")
     <*> option auto
         ( long "number_of_parties"
-        <> short 'p')
+        <> short 'p'
+        <> help "Number of parties")
     <*> optional (strOption
         ( long "candidate_list_csv"
         <> short 'c'
@@ -84,7 +104,7 @@ parseResultOptions = ResultOptions
         <> help "Required in case of threshold."))
 
 
-parseGallagherOptions :: Parser GallagherOptions
+parseGallagherOptions :: Parser Options
 parseGallagherOptions = GallagherOptions
     <$> strOption
         ( long "result_csv"
@@ -100,13 +120,14 @@ parseGallagherOptions = GallagherOptions
         <> help "File should contain header voterID,district,preferences")
     <*> option auto
         ( long "number_of_parties"
-        <> short 'p')
+        <> short 'p'
+        <> help "Number of parties")
     <*> optional (strOption
         ( long "candidate_list_csv"
         <> short 'c'
         <> help "Required in case of stv. File should contain header candidateID,party"))
 
-parseGovernabilityOptions :: Parser GovernabilityOptions
+parseGovernabilityOptions :: Parser Options
 parseGovernabilityOptions = GovernabilityOptions
     <$> strOption
         ( long "result_csv"
@@ -117,14 +138,12 @@ parseGovernabilityOptions = GovernabilityOptions
         <> short 'c'
         <> help "File should contain header partyID,coalitionID")
 
+withInfo :: Parser a -> String -> ParserInfo a
+withInfo opts desc = info (helper <*> opts) $ progDesc desc
+
 -- | Parses the call of virtual-arrow from the command-line.
 parser :: Parser Command
-parser =
-    subparser
-      ( command "result" (info (Result <$> parseResultOptions)
-        ( progDesc "Output the resulting parliament." ))
-      <> command "gallagher" (info (Gallagher <$> parseGallagherOptions)
-        ( progDesc "Calculate the index of representativeness according to Gallagher." ))
-      <> command "governability" (info (Governability <$> parseGovernabilityOptions)
-        ( progDesc "Calculate the index of governability." ))
-      )
+parser = subparser (
+    (command "result" ((Result <$> parseResultOptions) `withInfo` "Output the resulting parliament." ))
+ <> (command "gallagher" ((Gallagher <$> parseGallagherOptions) `withInfo` "Calculate the index of representativeness according to Gallagher." ))
+ <> (command "governability" ((Governability <$> parseGovernabilityOptions) `withInfo` "Calculate the index of governability." )) )

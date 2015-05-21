@@ -46,7 +46,7 @@ readInput dfile vfile np = do
 
 -- | Parses command-line arguments passed to @result@ command and outputs the
 -- resulting parliament. Used by 'run'.
-runResultCommand :: CL.ResultOptions -> IO()
+runResultCommand :: CL.Options -> IO()
 runResultCommand opts = do
     input <- readInput 
         (CL.districtCsv opts)
@@ -84,7 +84,7 @@ runResultCommand opts = do
 
 -- | Parses command-line arguments passed to @gallagher@ command and outputs the
 -- index of representativeness. Used by 'run'.
-runGallagherCommand :: CL.GallagherOptions -> IO()
+runGallagherCommand :: CL.Options -> IO()
 runGallagherCommand opts = do
     input <- readInput 
         (CL.rDistrictCsv opts) 
@@ -100,7 +100,7 @@ runGallagherCommand opts = do
 
 -- | Parses command-line arguments passed to @governability@ command and outputs 
 -- the index of governability. Used by 'run'.
-runGovernabilityCommand :: CL.GovernabilityOptions -> IO()
+runGovernabilityCommand :: CL.Options -> IO()
 runGovernabilityCommand opts = do
     coalitions <- Csv.readCoalitionsFromCSV (CL.gCoalitionCsv opts)
     parliament <- Csv.readParliamentFromCSV (CL.gResultCSV opts)
